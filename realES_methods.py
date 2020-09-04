@@ -246,60 +246,59 @@ class EarthEvents:
                 
             else:
                 
-                x_prop = x + np.array([rawdis*st*np.cos(phi) , rawdis*st*np.sin(phi) ,rawdis*ct])
-                x2 , x2p , xdxp = np.sum(x**2) , np.sum(x_prop**2) , np.sum(x*x_prop)
-                
-                ycheck = (x2 - xdxp)/(x2p + x2 - 2*xdxp)
-                xcheck = (1-ycheck)*x + ycheck*x_prop
-                xdxc , x2c = np.sum(x*xcheck) , np.sum(xcheck**2)
-                
-                ssx , ssxp ,ssxc = get_status(x),get_status(x_prop),get_status(xcheck)
+                dx = np.array([rawdis*st*np.cos(phi) , rawdis*st*np.sin(phi) ,rawdis*ct])
+                xdotdx, dx2 = np.sum(x*dx), np.sum(dx*dx) 
+
+                ycheck = - xdotdx/dx2
+                xcheck = ycheck*dx + x
+                ssx , ssxp ,ssxc = get_status(x),get_status(x+dx),get_status(xcheck)
                 
                 # outward
                 if ycheck <= 0 and ssx != ssxp and ssx == 2:
-                    a = x2p + x2 - 2*xdxp # > 0
-                    b = 2*xdxp - 2*x2  
+                    a = dx2 # > 0
+                    b = 2*xdotdx
                     c = x2 - self.rCore**2 # < 0 
                     y = (-b+np.sqrt(b**2-4*a*c))/2/a*(1.+1e-3)
                     # update a new x
-                    x = (1-y)*x + y*x_prop
+                    x = x + y*dx
                     ss = get_status(x)
                     
                 # outward
                 elif ycheck <= 0 and ssx != ssxp and ssx == 1:
-                    a = x2p + x2 - 2*xdxp # > 0
-                    b = 2*xdxp - 2*x2 
+                    a = dx2 # > 0
+                    b = 2*xdotdx 
                     c = x2 - self.rEarth**2 # <0
                     y = (-b+np.sqrt(b**2-4*a*c))/2/a*(1.+1e-3)
                     # update a new x
-                    x = (1-y)*x + y*x_prop
+                    x = x + y*dx
                     ss = get_status(x)
                     
                 # inward
                 elif (ycheck > 0 and ycheck <= 1) and ssx !=ssxc and ssx == 1:
-                    # use xcheck instead of xprop
-                    a = x2c + x2 - 2*xdxc # > 0
-                    b = 2*xdxc - 2*x2 
+                    dx = ycheck*dx
+                    xdotdx, dx2 = np.sum(x*dx), np.sum(dx*dx)
+                    a = dx2 # > 0
+                    b = 2*xdotdx 
                     c = x2 - self.rCore**2 # > 0
                     y = (-b-np.sqrt(b**2-4*a*c))/2/a*(1.+1e-3)
                     # update a new x
-                    x = (1-y)*x + y*x_check
+                    x = x + y*dx
                     ss = get_status(x)
 
-                    
+                # inward    
                 elif ycheck > 1 and ssx != ssxp and ssx ==1:
-                    a = x2p + x2 - 2*xdxp # > 0
-                    b = 2*xdxp - 2*x2 # < 0
+                    a = dx2 # > 0
+                    b = 2*xdotdx  # < 0
                     c = x2 - self.rCore**2 # >0
                     y = (-b-np.sqrt(b**2-4*a*c))/2/a*(1.+1e-3)
-                    x = (1-y)*x + y*x_prop
+                    x = x + y*dx
                     ss = get_status(x)
 
                     
                     
                 elif ssx == ssxp:
 
-                    x = x_prop                    
+                    x = x + dx                    
                     ss = get_status(x)
                     
                     

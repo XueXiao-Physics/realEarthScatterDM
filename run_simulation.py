@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[21]:
+# In[1]:
 
 
 from realES_methods import *
@@ -11,13 +11,13 @@ import tqdm
 import io
 
 
-# In[153]:
+# In[2]:
 
 
 mdm = 1e10
 sige = 1e-28
 rawN = 2**21
-N = 1000
+N = 10000
 v0 = 0.02
 r_init = 6371.
 
@@ -33,7 +33,7 @@ def init_sample(N,r):
 sx,sy,sz = init_sample(N,r_init-1e-3)
 
 
-# In[156]:
+# In[4]:
 
 
 s = EarthEvents(mdm,sige)
@@ -47,11 +47,12 @@ s.inSIG2rhos()
 file = h5py.File('simulation1','w-')
 for i in range(N):
     x0 = [sx[i],sy[i],sz[i]]
+    
     s.direct_sample(N=2**21) 
     s.run_one(v0,x0)
     
     print(i+1,'\r',end='')
     file.create_dataset('path'+str(i),data = np.vstack([s.x.T,s.v]))
     file.flush()
-f.close()
+file.close()
 

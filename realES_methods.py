@@ -247,7 +247,7 @@ class EarthEvents:
             else:
                 
                 dx = np.array([rawdis*st*np.cos(phi) , rawdis*st*np.sin(phi) ,rawdis*ct])
-                xdotdx, dx2 = np.sum(x*dx), np.sum(dx*dx) 
+                x2 ,xdotdx, dx2 = np.sum(x*x) , np.sum(x*dx), np.sum(dx*dx) 
 
                 ycheck = - xdotdx/dx2
                 xcheck = ycheck*dx + x

@@ -13,12 +13,14 @@ import io
 
 # In[2]:
 
+input_params = input(' > N,mdm,sige,v0: (eg, 100,1e10,1e-28,0.02) \n > ')
+input_vals = input_params.split(',')
 
-mdm = 1e10
-sige = 1e-28
+mdm = float(input_vals[1])
+sige = float(input_vals[2])
 rawN = 2**21
-N = 10000
-v0 = 0.02
+N = int(input_vals[0])
+v0 = float(input_vals[3])
 r_init = 6371.
 
 def init_sample(N,r):
@@ -44,15 +46,17 @@ s.calc_ndsigv2dlogEdlogq2rho()
 s.cut_ndsigv2()
 s.inSIG2rhos()
 
-file = h5py.File('simulation1','w-')
+f = h5py.File('results/'+input_vals[1]+'_'+input_vals[2]+'_'+input_vals[3],'w-')
+f.create_dataset('mdm',data = mdm)
+f.create_dataset('sige',data = sige)
 for i in range(N):
     x0 = [sx[i],sy[i],sz[i]]
     
-    s.direct_sample(N=2**21) 
+    s.direct_sample(N=2**22) 
     s.run_one(v0,x0)
     
     print(i+1,'\r',end='')
-    file.create_dataset('path'+str(i),data = np.vstack([s.x.T,s.v]))
-    file.flush()
-file.close()
+    f.create_dataset('path'+str(i),data = np.vstack([s.x.T,s.v]))
+    f.flush()
+f.close()
 

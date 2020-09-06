@@ -222,7 +222,7 @@ class EarthEvents:
         countC = 0
         count = 1 # from 1 
 
-        while ss!=0 and v>0.01 and countM<N1 and countC<N2:
+        while ss!=0 and v>0.005 and countM<N1 and countC<N2:
 
             r = np.linalg.norm(x)
             # choose what to sample (or break the loop directly)
@@ -341,7 +341,7 @@ class EarthEvents:
         self.x = np.array(x_vec)
         self.ss = np.array(ss_vec) 
 
-        word = '       | effective collisions: %.0f | final velocity: %.3f \r'%(self.count,v)
+        word = '       | effective collisions: %.0f | final velocity: %.3f | final status %.0f \r'%(self.count,v,ss)
         print(word,end='') 
 
 

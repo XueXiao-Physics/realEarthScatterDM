@@ -20,7 +20,7 @@ class PathAnalysis:
 
     def load_paths(self):
         
-        f = h5py.File(filename,'r')
+        f = h5py.File(self.filename,'r')
         Npaths = len(f.keys()) - 2
         self.mdm = np.asarray(f['mdm'])
         self.sige = np.asarray(f['sige'])
@@ -60,13 +60,13 @@ class PathAnalysis:
         c = np.sum(hitpos_before*hitpos_before , axis=1) - detector_depth**2
         y1 = ( -b+np.sqrt(b**2 - 4*a*c) )/2/a
         y2 = ( -b-np.sqrt(b**2 - 4*a*c) )/2/a
-        y = np.where(y1 < y2 , y1 , y2)
+        y = np.where( c>0 , y2 , y1)
         hitpos = y[:,None]*dhitpos + hitpos_before
 
         self.hitvelo = hitvelo
         self.hitpos = hitpos
         
-        self.ctheta = hitpos[:,2]/detector_depth
+        self.hitctheta = hitpos[:,2]/detector_depth
         
 
         
@@ -77,4 +77,8 @@ if __name__=='__main__':
     s = PathAnalysis(filename)
     s.load_paths()
     s.cut_sphere()
-        
+    np.savetxt(filename+'.txt',np.vstack([s.hitctheta,s.hitvelo]))
+    #plt.hist2d(s.hitvelo,s.hitctheta,bins=20)
+    #plt.xlabel('velo')
+    #plt.ylabel('ctheta')
+    #plt.savefig(filename+'.jpg')

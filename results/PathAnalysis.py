@@ -3,11 +3,6 @@ import h5py
 import os
 
 
-
-
-
-
-
 class PathAnalysis:
 
 

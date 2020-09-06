@@ -76,16 +76,16 @@ class EarthEvents:
 ###################################################
 
 
-    def calc_ndsigv2dlogEdlogq2rho(self):
+    def calc_ndsigv2dEdq2rho(self):
 
         mu = me*self.mdm/(me+self.mdm)    
 
         # v^2*dsig/dlogq/dlogE * n/d(rho)
-        self.ndsigv2dlogEdlogq2rho_mantle = self.sige*me*a0**2/(2*mu**2) * self.q[None,:] \
-                        * self.K_mantle * self.q[None,:] * self.ER[:,None] * np.log(10)**2
+        self.ndsigv2dEdq2rho_mantle = self.sige*me*a0**2/(2*mu**2) * self.q[None,:] \
+                        * self.K_mantle
 
-        self.ndsigv2dlogEdlogq2rho_core = self.sige*me*a0**2/(2*mu**2) * self.q[None,:] \
-                        * self.K_core * self.q[None,:] * self.ER[:,None] * np.log(10)**2
+        self.ndsigv2dEdq2rho_core = self.sige*me*a0**2/(2*mu**2) * self.q[None,:] \
+                        * self.K_core
 
 
 ###################################################
@@ -95,8 +95,8 @@ class EarthEvents:
     def cut_ndsigv2(self):
         
         # first cut is based on the value of dsigv2
-        ndsigv2_mantle = self.ndsigv2dlogEdlogq2rho_mantle
-        ndsigv2_core = self.ndsigv2dlogEdlogq2rho_core
+        ndsigv2_mantle = self.ndsigv2dEdq2rho_mantle
+        ndsigv2_core = self.ndsigv2dEdq2rho_core
 
         check_m = np.where(ndsigv2_mantle > ndsigv2_mantle.max()*1e-3)
         check_c = np.where(ndsigv2_core > ndsigv2_core.max()*1e-3)
@@ -126,7 +126,7 @@ class EarthEvents:
 ###################################################
 #           Sampling methods                      #
 ###################################################
-    #TODO
+
     def direct_sample(self,N=2**20):
 
         np.random.seed()
@@ -190,6 +190,7 @@ class EarthEvents:
         
               
 
+        borders = [ None , self.rEarth , self.rCore ]
 
         def get_status(x):
             d = np.linalg.norm(x)
@@ -236,14 +237,12 @@ class EarthEvents:
                 countC += 1
                 rawdis = 1e-5/self.insig2rho_core(v)/self.irho_c(r)*np.random.exponential()
                 
-                
-            # to calculate
             v_prop2  = v**2  - 2.*ERs/self.mdm
-            
             if v_prop2 < (v-qs/self.mdm)**2 :
-
                 continue # break and to find the next sample
                 
+
+
             else:
                 
                 dx = np.array([rawdis*st*np.cos(phi) , rawdis*st*np.sin(phi) ,rawdis*ct])
@@ -251,56 +250,46 @@ class EarthEvents:
 
                 ycheck = - xdotdx/dx2
                 xcheck = ycheck*dx + x
-                ssx , ssxp ,ssxc = get_status(x),get_status(x+dx),get_status(xcheck)
+                ssx , ssxp , ssxc = get_status(x),get_status(x+dx),get_status(xcheck)
                 
                 # outward
-                if ycheck <= 0 and ssx != ssxp and ssx == 2:
+                if ycheck <= 0 and ssx > ssxp:
                     a = dx2 # > 0
                     b = 2*xdotdx
-                    c = x2 - self.rCore**2 # < 0 
+                    c = x2 - borders[ssx]**2 # < 0 
                     y = (-b+np.sqrt(b**2-4*a*c))/2/a*(1.+1e-3)
                     # update a new x
                     x = x + y*dx
                     ss = get_status(x)
+                    print('1',end='')
                     
-                # outward
-                elif ycheck <= 0 and ssx != ssxp and ssx == 1:
-                    a = dx2 # > 0
-                    b = 2*xdotdx 
-                    c = x2 - self.rEarth**2 # <0
-                    y = (-b+np.sqrt(b**2-4*a*c))/2/a*(1.+1e-3)
-                    # update a new x
-                    x = x + y*dx
-                    ss = get_status(x)
                     
                 # inward
-                elif (ycheck > 0 and ycheck <= 1) and ssx !=ssxc and ssx == 1:
+                elif (ycheck > 0 and ycheck <= 1) and ssx < ssxc:
                     dx = ycheck*dx
                     xdotdx, dx2 = np.sum(x*dx), np.sum(dx*dx)
                     a = dx2 # > 0
                     b = 2*xdotdx 
-                    c = x2 - self.rCore**2 # > 0
+                    c = x2 - borders[ssx+1]**2 # > 0
                     y = (-b-np.sqrt(b**2-4*a*c))/2/a*(1.+1e-3)
                     # update a new x
                     x = x + y*dx
                     ss = get_status(x)
+                    print('2',end='')
 
                 # inward    
-                elif ycheck > 1 and ssx != ssxp and ssx ==1:
+                elif ycheck > 1 and ssx < ssxp:
                     a = dx2 # > 0
                     b = 2*xdotdx  # < 0
-                    c = x2 - self.rCore**2 # >0
+                    c = x2 - borders[ssx+1]**2 # >0
                     y = (-b-np.sqrt(b**2-4*a*c))/2/a*(1.+1e-3)
                     x = x + y*dx
                     ss = get_status(x)
-
+                    print('3',end='')
                     
-                    
-                elif ssx == ssxp:
-
+                else:
                     x = x + dx                    
                     ss = get_status(x)
-                    
                     
                     beta = np.random.rand()*2*np.pi
                     sb = np.sin(beta)
@@ -315,10 +304,7 @@ class EarthEvents:
                     st = np.sqrt(1.-ct**2)
                     
                     v = v_prop
-                    
-                else:
-                    print('error')
-                    break    
+                    #print('4',end='')
                     
                     
                 save_data(v,ca,phi,ct,st,x,ss)
@@ -331,7 +317,6 @@ class EarthEvents:
 
                 
                 
-
         self.count = count
         self.v = np.array(v_vec)
         self.ca = np.array(ca_vec)
@@ -341,7 +326,7 @@ class EarthEvents:
         self.x = np.array(x_vec)
         self.ss = np.array(ss_vec) 
 
-        word = '       | effective collisions: %.0f | final velocity: %.3f | final status %.0f \r'%(self.count,v,ss)
+        word = '       | effective collisions: %.0f | final velocity: %.3f | final status %.0f \r'%(count,v,ss)
         print(word,end='') 
 
 
@@ -355,17 +340,17 @@ class EarthEvents:
     def _SIG(self,v):
         
         # for Mantle
-        logq = np.log10(self.q)
-        logER = np.log10(self.ER)
-        insqrt = self.mdm**2*v**2 - 2*self.mdm*10**logER
+        q = self.q
+        ER = self.ER
+        insqrt = self.mdm**2*v**2 - 2*self.mdm*ER
         insqrt = np.where(insqrt<0.,0.,insqrt)
-        logqmin = np.log10(self.mdm*v - np.sqrt(insqrt))
-        logqmax = np.log10(self.mdm*v + np.sqrt(insqrt))
-        msk = (logq[:,None]>logqmin[None,:])*(logq[:,None]<logqmax[None,:])
+        qmin = self.mdm*v - np.sqrt(insqrt)
+        qmax = self.mdm*v + np.sqrt(insqrt)
+        msk = (q[:,None]>qmin[None,:])*(q[:,None]<qmax[None,:])
 
-        ndsig2rho_mantle =  msk[1:,1:] * self.ndsigv2dlogEdlogq2rho_mantle[1:,1:].T * np.diff(logq)[:,None] * np.diff(logER)[None,:]/v**2
+        ndsig2rho_mantle =  msk[1:,1:] * self.ndsigv2dEdq2rho_mantle[1:,1:].T * np.diff(q)[:,None] * np.diff(ER)[None,:]/v**2
         nsig2rho_mantle = np.sum( ndsig2rho_mantle )        
-        ndsig2rho_core =  msk[1:,1:] * self.ndsigv2dlogEdlogq2rho_core[1:,1:].T * np.diff(logq)[:,None] * np.diff(logER)[None,:]/v**2
+        ndsig2rho_core =  msk[1:,1:] * self.ndsigv2dEdq2rho_core[1:,1:].T * np.diff(q)[:,None] * np.diff(ER)[None,:]/v**2
         nsig2rho_core = np.sum( ndsig2rho_core )             
         
    

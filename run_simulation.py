@@ -4,7 +4,7 @@
 # In[1]:
 
 
-from realES_methods import *
+from realES import *
 import matplotlib.pyplot as plt
 import scipy.interpolate
 import tqdm

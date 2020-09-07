@@ -13,13 +13,13 @@ import io
 
 # In[2]:
 
-input_params = input(' > mdm,sige,v0: (eg, 1e10,1e-28,0.02) \n > ')
+input_params = input(' > mdm,sige,v0,N:\n > ')
 input_vals = input_params.split(',')
 
 mdm = float(input_vals[0])
 sige = float(input_vals[1])
 rawN = 2**21
-N = 2000
+N = int(input_vals[3])
 v0 = float(input_vals[2])
 r_init = 6371.
 
@@ -42,7 +42,7 @@ s = EarthEvents(mdm,sige)
 
 
 s.load_Ktot()
-s.calc_ndsigv2dlogEdlogq2rho()
+s.calc_ndsigv2dEdq2rho()
 s.cut_ndsigv2()
 s.inSIG2rhos()
 

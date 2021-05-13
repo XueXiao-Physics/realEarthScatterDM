@@ -383,10 +383,10 @@ class EarthEvents:
         self.insig2rho_mantle = lambda v:np.interp(v,v_vec,nsig2rhos_mantle)
         self.insig2rho_core = lambda v:np.interp(v,v_vec,nsig2rhos_core)
 
-        str1 = '| \max \sum <ni * sigi> (core)'
-        str2 = '| \max \sum <ni * sigi> (mantle)'
-        print('{:<34}'.format(str1),'= %.2e'%np.max(nsig2rhos_core*self.__mean_rho_core ),'(1/cm)|')
-        print('{:<34}'.format(str2),'= %.2e'%np.max(nsig2rhos_mantle*self.__mean_rho_mantle),'(1/cm)|')
+        str1 = '| (v=1e-2) \sum <ni * sigi> (core)'
+        str2 = '| (v=1e-2) \sum <ni * sigi> (mantle)'
+        print('{:<34}'.format(str1),'= %.2e'%(self.insig2rho_core(1e-2) * self.__mean_rho_core ),'(1/cm)|')
+        print('{:<34}'.format(str2),'= %.2e'%(self.insig2rho_mantle(1e-2)  * self.__mean_rho_mantle),'(1/cm)|')
 
             
             

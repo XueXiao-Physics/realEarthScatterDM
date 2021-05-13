@@ -4,7 +4,7 @@ import scipy.interpolate
 import io
 
 
-#1e9,1e-30,1e-3,100
+#5e7,1e-28,1e-3,10
 input_params = input(' > mdm,sige,v0,N:\n > ')
 input_vals = input_params.split(',')
 
@@ -27,7 +27,6 @@ def init_sample(N,r):
 sx,sy,sz = init_sample(N,r_init-1e-3)
 
 
-# In[4]:
 
 
 s = EarthEvents(mdm,sige)
@@ -37,6 +36,8 @@ s.load_Ktot()
 s.calc_sum_ndsig2rho_v2dlnEdlnq()
 s.cut_ndsigv2()
 s.inSIG2rhos()
+
+input(' >>> Press Enter to Start Simulaton. <<<')
 
 f = h5py.File('results/'+input_vals[0]+'_'+input_vals[1]+'_'+input_vals[2],'w-')
 f.create_dataset('mdm',data = mdm)

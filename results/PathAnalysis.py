@@ -1,6 +1,7 @@
 import numpy as np
 import h5py
 import os
+import sys
 
 
 class PathAnalysis:
@@ -68,12 +69,12 @@ class PathAnalysis:
 
 if __name__=='__main__':   
     import matplotlib.pyplot as plt
-    filename = input(' > filename: \n > ')
+    filename = sys.argv[1]
     s = PathAnalysis(filename)
     s.load_paths()
     s.cut_sphere()
     np.savetxt(filename+'.txt',np.vstack([s.hitctheta,s.hitvelo]))
-    #plt.hist2d(s.hitvelo,s.hitctheta,bins=20)
-    #plt.xlabel('velo')
-    #plt.ylabel('ctheta')
-    #plt.savefig(filename+'.jpg')
+    plt.hist2d(s.hitvelo,s.hitctheta,bins=20)
+    plt.xlabel('velo')
+    plt.ylabel('ctheta')
+    plt.savefig(filename+'.jpg')

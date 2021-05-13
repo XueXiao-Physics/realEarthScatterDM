@@ -38,18 +38,26 @@ s.cut_ndsigv2()
 s.inSIG2rhos()
 
 input(' >>> Press Enter to Start Simulaton. <<<')
-
-f = h5py.File('results/'+input_vals[0]+'_'+input_vals[1]+'_'+input_vals[2],'w-')
-f.create_dataset('mdm',data = mdm)
-f.create_dataset('sige',data = sige)
+try:
+    f = h5py.File('results/'+input_vals[0]+'_'+input_vals[1]+'_'+input_vals[2],'w-')
+    f.create_dataset('mdm',data = mdm)
+    f.create_dataset('sige',data = sige)
+    N0 = 0
+except OSError:
+    f = h5py.File('results/'+input_vals[0]+'_'+input_vals[1]+'_'+input_vals[2],'a')
+    keynames = list(filter(lambda i:i[:4]=='path',f.keys()) )
+    nums = [int(k[4:]) for k in keynames]
+    N0 = max(nums)
+	
 for i in range(N):
     x0 = [sx[i],sy[i],sz[i]]
     
     s.direct_sample(N=2**23) 
     s.run_one(v0,x0)
     
-    print(i+1,'\r',end='')
-    f.create_dataset('path'+str(i),data = np.vstack([s.x.T,s.v]))
+    print(i+1+N0,'\r',end='')
+    f.create_dataset('path'+str(i+1+N0),data = np.vstack([s.x.T,s.v]))
     f.flush()
+print('\n')
 f.close()
 

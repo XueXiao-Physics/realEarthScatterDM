@@ -16,23 +16,24 @@ class PathAnalysis:
 
     def load_paths(self):
         
-        f = h5py.File(self.filename,'r')
-        Npaths = len(f.keys()) - 2
-        self.mdm = np.asarray(f['mdm'])
-        self.sige = np.asarray(f['sige'])
-        rawpaths = []
-        for i in range(Npaths):    
-            path = np.asarray( f['path'+str(i)] )
-            rawpaths.append( path )
-        MaxSteps = max([len(p[0]) for p in rawpaths])
+        with h5py.File(self.filename,'r') as f:
+            keynames = list(filter(lambda i:i[:4]=='path',f.keys()) )
+            Npaths = len(keynames)
+            self.mdm = np.asarray(f['mdm'])
+            self.sige = np.asarray(f['sige'])
+            rawpaths = []
+            for key in keynames:    
+                path = np.asarray( f[key] )
+                rawpaths.append( path )
+            MaxSteps = max([len(p[0]) for p in rawpaths])
 
-        Paths = np.zeros((Npaths,4,MaxSteps))
+            Paths = np.zeros((Npaths,4,MaxSteps))
 
-        for i in range(Npaths):
-            path = rawpaths[i]
-            Paths[i,:,:len(path[0])] = path
-            Paths[i,:,len(path[0]):] = path[:,-1][:,None]
-        self.Paths = Paths
+            for i in range(Npaths):
+                path = rawpaths[i]
+                Paths[i,:,:len(path[0])] = path
+                Paths[i,:,len(path[0]):] = path[:,-1][:,None]
+            self.Paths = Paths
 
         
 
@@ -73,7 +74,7 @@ if __name__=='__main__':
     s = PathAnalysis(filename)
     s.load_paths()
     s.cut_sphere()
-    np.savetxt(filename+'.txt',np.vstack([s.hitctheta,s.hitvelo]))
+    np.savetxt(filename+'.txt',np.vstack([s.hitctheta,s.hitvelo]).T)
     plt.hist2d(s.hitvelo,s.hitctheta,bins=20)
     plt.xlabel('velo')
     plt.ylabel('ctheta')

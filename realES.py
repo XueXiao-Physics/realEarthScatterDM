@@ -78,8 +78,8 @@ class EarthEvents:
         str2 ='| <ne> * sige (mantle)'
         
         
-        print('{:<34}'.format(str1), '= %.2e'%(self.sige*out1[6]*out2[2]),'(1/cm)|')
-        print('{:<34}'.format(str1), '= %.2e'%(self.sige*out1[7]*out2[3]),'(1/cm)|')
+        print('{:<36}'.format(str1), '= %.2e'%(self.sige*out1[6]*out2[2]),'(1/cm)|')
+        print('{:<36}'.format(str2), '= %.2e'%(self.sige*out1[7]*out2[3]),'(1/cm)|')
 
 
 
@@ -337,7 +337,7 @@ class EarthEvents:
         self.x = np.array(x_vec)
         self.ss = np.array(ss_vec) 
 
-        word = '       | effective collisions: %.0f | final velocity: %.3f | final status %.0f \r'%(count,v,ss)
+        word = '       | effective collisions: %.0f | final velocity: %.2e | final status %.0f \r'%(count,v,ss)
         print(word,end='') 
 
 
@@ -383,10 +383,10 @@ class EarthEvents:
         self.insig2rho_mantle = lambda v:np.interp(v,v_vec,nsig2rhos_mantle)
         self.insig2rho_core = lambda v:np.interp(v,v_vec,nsig2rhos_core)
 
-        str1 = '| (v=1e-2) \sum <ni * sigi> (core)'
-        str2 = '| (v=1e-2) \sum <ni * sigi> (mantle)'
-        print('{:<34}'.format(str1),'= %.2e'%(self.insig2rho_core(1e-2) * self.__mean_rho_core ),'(1/cm)|')
-        print('{:<34}'.format(str2),'= %.2e'%(self.insig2rho_mantle(1e-2)  * self.__mean_rho_mantle),'(1/cm)|')
+        str1 = '| (v=1e-1) \sum <ni*sigi> (core)'
+        str2 = '| (v=1e-1) \sum <ni*sigi> (mantle)'
+        print('{:<36}'.format(str1),'= %.2e'%(self.insig2rho_core(1e-1) * self.__mean_rho_core ),'(1/cm)|')
+        print('{:<36}'.format(str2),'= %.2e'%(self.insig2rho_mantle(1e-1)  * self.__mean_rho_mantle),'(1/cm)|')
 
             
             

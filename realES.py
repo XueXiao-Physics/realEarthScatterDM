@@ -66,8 +66,20 @@ class EarthEvents:
 
     def load_Ktot(self):
 
-        self.K_core,self.K_mantle,self.q,self.ER = EP.get_K()
-        self.irho_c,self.irho_m = EP.get_irho()
+        out1 = EP.get_K()
+        out2 = EP.get_irho()
+        self.K_core,self.K_mantle,self.q,self.ER = out1[:4]
+        self.irho_c,self.irho_m = out2[:2]
+        
+        self.__mean_rho_core = out2[2]
+        self.__mean_rho_mantle = out2[3]
+        
+        str1 ='| <ne> * sige (core)'
+        str2 ='| <ne> * sige (mantle)'
+        
+        
+        print('{:<34}'.format(str1), '= %.2e'%(self.sige*out1[6]*out2[2]),'(1/cm)|')
+        print('{:<34}'.format(str1), '= %.2e'%(self.sige*out1[7]*out2[3]),'(1/cm)|')
 
 
 
@@ -75,17 +87,16 @@ class EarthEvents:
 #           Get dsig                              #
 ###################################################
 
-
-    def calc_ndsigv2dEdq2rho(self):
+    def calc_sum_ndsig2rho_v2dlnEdlnq(self):
 
         mu = me*self.mdm/(me+self.mdm)    
 
         # v^2*dsig/dlogq/dlogE * n/d(rho)
-        self.ndsigv2dEdq2rho_mantle = self.sige*me*a0**2/(2*mu**2) * self.q[None,:] \
-                        * self.K_mantle
+        self.sum_ndsig2rho_v2dlnEdlnq_mantle = self.sige*me*a0**2/(2*mu**2) * self.q[None,:] \
+                        * self.K_mantle * self.q[None,:] * self.ER[:,None]
 
-        self.ndsigv2dEdq2rho_core = self.sige*me*a0**2/(2*mu**2) * self.q[None,:] \
-                        * self.K_core
+        self.sum_ndsig2rho_v2dlnEdlnq_core = self.sige*me*a0**2/(2*mu**2) * self.q[None,:] \
+                        * self.K_core * self.q[None,:] * self.ER[:,None]
 
 
 ###################################################
@@ -95,8 +106,8 @@ class EarthEvents:
     def cut_ndsigv2(self):
         
         # first cut is based on the value of dsigv2
-        ndsigv2_mantle = self.ndsigv2dEdq2rho_mantle
-        ndsigv2_core = self.ndsigv2dEdq2rho_core
+        ndsigv2_mantle = self.sum_ndsig2rho_v2dlnEdlnq_mantle
+        ndsigv2_core = self.sum_ndsig2rho_v2dlnEdlnq_core
 
         check_m = np.where(ndsigv2_mantle > ndsigv2_mantle.max()*1e-3)
         check_c = np.where(ndsigv2_core > ndsigv2_core.max()*1e-3)
@@ -348,9 +359,9 @@ class EarthEvents:
         qmax = self.mdm*v + np.sqrt(insqrt)
         msk = (q[:,None]>qmin[None,:])*(q[:,None]<qmax[None,:])
 
-        ndsig2rho_mantle =  msk[1:,1:] * self.ndsigv2dEdq2rho_mantle[1:,1:].T * np.diff(q)[:,None] * np.diff(ER)[None,:]/v**2
+        ndsig2rho_mantle =  msk[1:,1:] * self.sum_ndsig2rho_v2dlnEdlnq_mantle[1:,1:].T * np.diff(np.log(q))[:,None] * np.diff(np.log(ER))[None,:]/v**2
         nsig2rho_mantle = np.sum( ndsig2rho_mantle )        
-        ndsig2rho_core =  msk[1:,1:] * self.ndsigv2dEdq2rho_core[1:,1:].T * np.diff(q)[:,None] * np.diff(ER)[None,:]/v**2
+        ndsig2rho_core =  msk[1:,1:] * self.sum_ndsig2rho_v2dlnEdlnq_core[1:,1:].T * np.diff(np.log(q))[:,None] * np.diff(np.log(ER))[None,:]/v**2
         nsig2rho_core = np.sum( ndsig2rho_core )             
         
    
@@ -366,13 +377,16 @@ class EarthEvents:
             nsig2rho_mantle, nsig2rho_core = self._SIG(v)
             nsig2rhos_mantle.append(nsig2rho_mantle)
             nsig2rhos_core.append(nsig2rho_core)
+            
+        nsig2rhos_mantle = np.array(nsig2rhos_mantle)
+        nsig2rhos_core = np.array(nsig2rhos_core)
         self.insig2rho_mantle = lambda v:np.interp(v,v_vec,nsig2rhos_mantle)
         self.insig2rho_core = lambda v:np.interp(v,v_vec,nsig2rhos_core)
 
-        str1 = '| n * sigma / rho (Mantle)'
-        str2 = '| n * sigma / rho (Core)'
-        print('{:<30}'.format(str1),':%.2e cm^2'%max(nsig2rhos_mantle))
-        print('{:<30}'.format(str2),':%.2e cm^2'%max(nsig2rhos_core))
+        str1 = '| \max \sum <ni * sigi> (core)'
+        str2 = '| \max \sum <ni * sigi> (mantle)'
+        print('{:<34}'.format(str1),'= %.2e'%np.max(nsig2rhos_core*self.__mean_rho_core ),'(1/cm)|')
+        print('{:<34}'.format(str2),'= %.2e'%np.max(nsig2rhos_mantle*self.__mean_rho_mantle),'(1/cm)|')
 
             
             

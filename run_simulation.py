@@ -1,18 +1,10 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
 from realES import *
 import matplotlib.pyplot as plt
 import scipy.interpolate
-import tqdm
 import io
 
 
-# In[2]:
-
+#1e9,1e-30,1e-3,100
 input_params = input(' > mdm,sige,v0,N:\n > ')
 input_vals = input_params.split(',')
 
@@ -42,7 +34,7 @@ s = EarthEvents(mdm,sige)
 
 
 s.load_Ktot()
-s.calc_ndsigv2dEdq2rho()
+s.calc_sum_ndsig2rho_v2dlnEdlnq()
 s.cut_ndsigv2()
 s.inSIG2rhos()
 

@@ -9,10 +9,6 @@ import EarthProfile as EP
 #           Xiao Xue                              #
 #           xuexiao@mail.itp.ac.cn                #
 #           xxueitp@gmail.com                     #
-#                                                 #
-#           Xiao Xue                              #
-#           xuexiao@mail.itp.ac.cn                #
-#           xxueitp@gmail.com                     #
 #                                                 #  
 #           September 2020                        # 
 ###################################################
@@ -215,32 +211,21 @@ class EarthEvents:
         save_data(v,ca,phi,ct,st,x,ss)
         
         count = 1 # from 1 
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> a4467238ff0ce830fc7ef42e85d8a9b56d06d23d
         while ss!=0 and v>self.vmin:
             N1,N2 = self.direct_sample(v)
             while N1==0 or N2 ==0:
                 N1,N2 = self.direct_sample(v)   
-<<<<<<< HEAD
-=======
-=======
-
-        while ss!=0 and v>0.001 and countM<N1 and countC<N2:
->>>>>>> a4253e2742a6401a182cf21c668f06dcaaf0430f
->>>>>>> a4467238ff0ce830fc7ef42e85d8a9b56d06d23d
-
+                
             r = np.linalg.norm(x)
             # choose what to sample (or break the loop directly)
             if ss == 1:
                 qs,ERs = self.q_sample_mantle[0],self.ER_sample_mantle[0]
                 rawdis = 1e-5/self.insig2rho_mantle(v)/self.irho_m(r)*np.random.exponential()
-                
+
             elif ss == 2:
                 qs,ERs = self.q_sample_core[0],self.ER_sample_core[0]
                 rawdis = 1e-5/self.insig2rho_core(v)/self.irho_c(r)*np.random.exponential()
-                
+
             v_prop2  = v**2  - 2.*ERs/self.mdm
 
 
@@ -250,7 +235,7 @@ class EarthEvents:
             ycheck = - xdotdx/dx2
             xcheck = ycheck*dx + x
             ssx , ssxp , ssxc = get_status(x),get_status(x+dx),get_status(xcheck)
-            
+
             # outward
             if ycheck <= 0 and ssx > ssxp:
                 a = dx2 # > 0
@@ -261,8 +246,8 @@ class EarthEvents:
                 x = x + y*dx
                 ss = get_status(x)
                 print('1',end='')
-                
-                
+
+
             # inward
             elif (ycheck > 0 and ycheck <= 1) and ssx < ssxc:
                 dx = ycheck*dx
@@ -285,27 +270,27 @@ class EarthEvents:
                 x = x + y*dx
                 ss = get_status(x)
                 #print('3',end='')
-                
+
             else:
                 x = x + dx                    
                 ss = get_status(x)
-                
+
                 beta = np.random.rand()*2*np.pi
                 sb = np.sin(beta)
                 cb = np.cos(beta)   
-                                 
+
                 v_prop = np.sqrt(v_prop2)
                 ca = (v**2 + v_prop2 - qs**2/self.mdm**2 )/2./v/v_prop
                 sa = np.sqrt(1-ca**2)
-                
+
                 phi +=  np.arctan2(sa*sb,st*ca + ct*sa*cb)
                 ct = ct*ca - st*sa*cb
                 st = np.sqrt(1.-ct**2)
-                
+
                 v = v_prop
                 #print('4',end='')
-                
-                
+
+
             save_data(v,ca,phi,ct,st,x,ss)
             count += 1
                     

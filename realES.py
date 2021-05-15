@@ -234,7 +234,7 @@ class EarthEvents:
         countC = 0
         count = 1 # from 1 
 
-        while ss!=0 and v>0.005 and countM<N1 and countC<N2:
+        while ss!=0 and v>0.001 and countM<N1 and countC<N2:
 
             r = np.linalg.norm(x)
             # choose what to sample (or break the loop directly)

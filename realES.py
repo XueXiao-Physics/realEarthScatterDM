@@ -215,10 +215,21 @@ class EarthEvents:
         save_data(v,ca,phi,ct,st,x,ss)
         
         count = 1 # from 1 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> a4467238ff0ce830fc7ef42e85d8a9b56d06d23d
         while ss!=0 and v>self.vmin:
             N1,N2 = self.direct_sample(v)
             while N1==0 or N2 ==0:
                 N1,N2 = self.direct_sample(v)   
+<<<<<<< HEAD
+=======
+=======
+
+        while ss!=0 and v>0.001 and countM<N1 and countC<N2:
+>>>>>>> a4253e2742a6401a182cf21c668f06dcaaf0430f
+>>>>>>> a4467238ff0ce830fc7ef42e85d8a9b56d06d23d
 
             r = np.linalg.norm(x)
             # choose what to sample (or break the loop directly)

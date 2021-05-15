@@ -110,7 +110,7 @@ class EarthEvents:
 #           Sampling methods                      #
 ###################################################
 
-    def direct_sample(self,v,N=100000):
+    def direct_sample(self,v,N=10000):
 
         ERmax = self.mdm*v**2/2
         cut = np.max(np.where(self.ER <= ERmax))

@@ -358,7 +358,8 @@ class EarthEvents:
         qmin = self.mdm*v - np.sqrt(insqrt)
         qmax = self.mdm*v + np.sqrt(insqrt)
         msk = (q[:,None]>qmin[None,:])*(q[:,None]<qmax[None,:])
-
+        # Integrating _SIG
+        
         ndsig2rho_mantle =  msk[1:,1:] * self.sum_ndsig2rho_v2dlnEdlnq_mantle[1:,1:].T * np.diff(np.log(q))[:,None] * np.diff(np.log(ER))[None,:]/v**2
         nsig2rho_mantle = np.sum( ndsig2rho_mantle )        
         ndsig2rho_core =  msk[1:,1:] * self.sum_ndsig2rho_v2dlnEdlnq_core[1:,1:].T * np.diff(np.log(q))[:,None] * np.diff(np.log(ER))[None,:]/v**2
@@ -370,9 +371,10 @@ class EarthEvents:
 
     def inSIG2rhos(self):
         
-        v_vec = np.linspace(1e-20,0.5,100)
+        v_vec = np.linspace(1e-20,0.2,100)
         nsig2rhos_mantle=[]
         nsig2rhos_core=[]
+        print('| Calculating \int\sig_{ion} ...')
         for v in v_vec:
             nsig2rho_mantle, nsig2rho_core = self._SIG(v)
             nsig2rhos_mantle.append(nsig2rho_mantle)

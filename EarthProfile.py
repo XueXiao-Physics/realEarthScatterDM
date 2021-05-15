@@ -39,14 +39,7 @@ def get_irho():
 
 
 
-
-
-# for each element, import K data (Assume that they gridded the same way)
-def get_K():
-
-    # mass composition
-    # mass per atom (GeV) / mass percentage in Core / mass percentage in Mantle
-    mass_dict = {'O':(14.9,	8,	0.,		0.44),
+mass_dict = {'O':(14.9,	8,	0.,		0.44),
                 'Mg':(22.3,	12,	0.,		0.228),
                 'Al':(25.1, 	13,	0.,		0.0235),
                 'Si':(26.1,	14,	0.06,		0.210),
@@ -54,6 +47,13 @@ def get_K():
                 'Ca':(37.2,	20,	0.,		0.0253),
                 'Fe':(52.1,	26,	0.855,		0.0626),
                 'Ni':(58.7,	28,	0.052,		0.00196)}
+
+# for each element, import K data (Assume that they gridded the same way)
+def get_K():
+
+    # mass composition
+    # mass per atom (GeV) / mass percentage in Core / mass percentage in Mantle
+
 
 
     # calcualte relative number density of each element. 

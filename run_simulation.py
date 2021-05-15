@@ -34,7 +34,6 @@ s = EarthEvents(mdm,sige)
 
 s.load_Ktot()
 s.calc_sum_ndsig2rho_v2dlnEdlnq()
-s.cut_ndsigv2()
 s.inSIG2rhos()
 
 input(' >>> Press Enter to Start Simulaton. <<<')
@@ -46,17 +45,19 @@ try:
 except OSError:
     f = h5py.File('results/'+input_vals[0]+'_'+input_vals[1]+'_'+input_vals[2],'a')
     keynames = list(filter(lambda i:i[:4]=='path',f.keys()) )
-    nums = [int(k[4:]) for k in keynames]
-    N0 = max(nums)
+    if len(keynames) != 0:
+        nums = [int(k[4:]) for k in keynames]
+        N0 = max(nums)
+    else:
+        N0 = 0
 	
 for i in range(N):
     x0 = [sx[i],sy[i],sz[i]]
     
-    s.direct_sample(N=2**23) 
     s.run_one(v0,x0)
     
     print(i+1+N0,'\r',end='')
-    f.create_dataset('path'+str(i+1+N0),data = np.vstack([s.x.T,s.v]))
+    f.create_dataset('path'+str(i+1+N0),data = np.vstack([s.x.T,s.v,s.ss]))
     f.flush()
 print('\n')
 f.close()

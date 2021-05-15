@@ -37,6 +37,7 @@ def Load_Events(name):
     sige = np.array(f['sige'])
     f.close()
 
+
     return Analysis(Paths,Vs,mdm,sige)
 
 
@@ -76,10 +77,13 @@ class EarthEvents:
         
         str1 ='| <ne> * sige (core)'
         str2 ='| <ne> * sige (mantle)'
+        self.vmin = np.sqrt(2*self.ER[1]/self.mdm)
         
         
         print('{:<36}'.format(str1), '= %.2e'%(self.sige*out1[6]*out2[2]),'(1/cm)|')
         print('{:<36}'.format(str2), '= %.2e'%(self.sige*out1[7]*out2[3]),'(1/cm)|')
+        
+        print('{:<36}'.format('| v_min caused by ERmin'),': %.2e'%self.vmin )
 
 
 
@@ -99,38 +103,6 @@ class EarthEvents:
                         * self.K_core * self.q[None,:] * self.ER[:,None]
 
 
-###################################################
-#           Cut it smaller                        #
-###################################################
-
-    def cut_ndsigv2(self):
-        
-        # first cut is based on the value of dsigv2
-        ndsigv2_mantle = self.sum_ndsig2rho_v2dlnEdlnq_mantle
-        ndsigv2_core = self.sum_ndsig2rho_v2dlnEdlnq_core
-
-        check_m = np.where(ndsigv2_mantle > ndsigv2_mantle.max()*1e-3)
-        check_c = np.where(ndsigv2_core > ndsigv2_core.max()*1e-3)
-
-        pos_m = [check_m[1].min(),check_m[1].max(),check_m[0].min(),check_m[0].max()]
-        pos_c = [check_c[1].min(),check_c[1].max(),check_c[0].min(),check_c[0].max()]
-        pos = [min(pos_m[0],pos_c[0]),max(pos_m[1],pos_c[1]),min(pos_m[2],pos_c[2]),max(pos_m[3],pos_c[3])]
-        
-        ndsigv2_mantle_cut = ndsigv2_mantle[pos[2]:pos[3]+1,pos[0]:pos[1]+1]
-        ndsigv2_core_cut = ndsigv2_core[pos[2]:pos[3]+1,pos[0]:pos[1]+1]
-
-        q_cut = self.q[pos[0]:pos[1]+1]
-        ER_cut = self.ER[pos[2]:pos[3]+1]     
- 
-
-        # second cut is based on 'mask', which is the physical constrain on ER and q which relies on v.
-
-        self.ndsigv2_mantle_cut = ndsigv2_mantle_cut
-        self.ndsigv2_core_cut = ndsigv2_core_cut 
-
-
-        self.q_cut = q_cut
-        self.ER_cut = ER_cut 
 
 
 
@@ -138,32 +110,46 @@ class EarthEvents:
 #           Sampling methods                      #
 ###################################################
 
-    def direct_sample(self,N=2**20):
+    def direct_sample(self,v,N=100000):
 
+        ERmax = self.mdm*v**2/2
+        cut = np.max(np.where(self.ER <= ERmax))
+               
         np.random.seed()
 
         # for Earth Mantle
-        a,b =  self.ndsigv2_mantle_cut.shape
-        x = np.random.randint(0,a,size=N)
-        y = np.random.randint(0,b,size=N)
-        dice = np.random.rand(N)*self.ndsigv2_mantle_cut.max()
-        msk = dice < self.ndsigv2_mantle_cut[x,y]
+        x = np.random.randint(0,cut,size=N)
+        y = np.random.randint(0,len(self.q),size=N)
+        dice = np.random.rand(N)*self.sum_ndsig2rho_v2dlnEdlnq_mantle[:cut,:].max()
+        msk = dice < self.sum_ndsig2rho_v2dlnEdlnq_mantle[x,y]
         x_sel = x[msk]
         y_sel = y[msk]
-        self.q_sample_mantle = self.q_cut[y_sel]
-        self.ER_sample_mantle = self.ER_cut[x_sel]
+        
+        ERs = self.ER[x_sel]
+        qs = self.q[y_sel]        
+        msk2 = np.where(ERs<(qs*v-qs**2/2/self.mdm))
+        
+        self.ER_sample_mantle = ERs[msk2]
+        self.q_sample_mantle = qs[msk2]
 
 
         # for Earth Core
-        a,b =  self.ndsigv2_core_cut.shape
-        x = np.random.randint(0,a,size=N)
-        y = np.random.randint(0,b,size=N)
-        dice = np.random.rand(N)*self.ndsigv2_core_cut.max()
-        msk = dice < self.ndsigv2_core_cut[x,y]
+        x = np.random.randint(0,cut,size=N)
+        y = np.random.randint(0,len(self.q),size=N)
+        dice = np.random.rand(N)*self.sum_ndsig2rho_v2dlnEdlnq_core[:cut,:].max()
+        msk = dice < self.sum_ndsig2rho_v2dlnEdlnq_core[x,y]
         x_sel = x[msk]
         y_sel = y[msk]
-        self.q_sample_core = self.q_cut[y_sel]
-        self.ER_sample_core = self.ER_cut[x_sel]
+        
+        
+        ERs = self.ER[x_sel]
+        qs = self.q[y_sel]
+        msk2 = np.where(ERs<(self.mdm*v-qs**2/2/self.mdm))
+        
+        self.ER_sample_core = ERs[msk2]
+        self.q_sample_core = qs[msk2]
+        
+        return len(self.ER_sample_core),len(self.ER_sample_mantle)
 
     
 
@@ -174,8 +160,6 @@ class EarthEvents:
 
     def run_one(self,v0,x0):
         
-        N1 = len(self.q_sample_mantle)
-        N2 = len(self.q_sample_core)
 
 
         # relative info ->
@@ -230,96 +214,94 @@ class EarthEvents:
         ss = get_status(x0)
         save_data(v,ca,phi,ct,st,x,ss)
         
-        countM = 0
-        countC = 0
         count = 1 # from 1 
+<<<<<<< HEAD
+        while ss!=0 and v>self.vmin:
+            N1,N2 = self.direct_sample(v)
+            while N1==0 or N2 ==0:
+                N1,N2 = self.direct_sample(v)   
+=======
 
         while ss!=0 and v>0.001 and countM<N1 and countC<N2:
+>>>>>>> a4253e2742a6401a182cf21c668f06dcaaf0430f
 
             r = np.linalg.norm(x)
             # choose what to sample (or break the loop directly)
             if ss == 1:
-                qs,ERs = self.q_sample_mantle[countM],self.ER_sample_mantle[countM]
-                countM += 1
+                qs,ERs = self.q_sample_mantle[0],self.ER_sample_mantle[0]
                 rawdis = 1e-5/self.insig2rho_mantle(v)/self.irho_m(r)*np.random.exponential()
                 
             elif ss == 2:
-                qs,ERs = self.q_sample_core[countC],self.ER_sample_core[countC]
-                countC += 1
+                qs,ERs = self.q_sample_core[0],self.ER_sample_core[0]
                 rawdis = 1e-5/self.insig2rho_core(v)/self.irho_c(r)*np.random.exponential()
                 
             v_prop2  = v**2  - 2.*ERs/self.mdm
-            if v_prop2 < (v-qs/self.mdm)**2 :
-                continue # break and to find the next sample
+
+
+            dx = np.array([rawdis*st*np.cos(phi) , rawdis*st*np.sin(phi) ,rawdis*ct])
+            x2 ,xdotdx, dx2 = np.sum(x*x) , np.sum(x*dx), np.sum(dx*dx) 
+
+            ycheck = - xdotdx/dx2
+            xcheck = ycheck*dx + x
+            ssx , ssxp , ssxc = get_status(x),get_status(x+dx),get_status(xcheck)
+            
+            # outward
+            if ycheck <= 0 and ssx > ssxp:
+                a = dx2 # > 0
+                b = 2*xdotdx
+                c = x2 - borders[ssx]**2 # < 0 
+                y = (-b+np.sqrt(b**2-4*a*c))/2/a*(1.+1e-3)
+                # update a new x
+                x = x + y*dx
+                ss = get_status(x)
+                print('1',end='')
                 
+                
+            # inward
+            elif (ycheck > 0 and ycheck <= 1) and ssx < ssxc:
+                dx = ycheck*dx
+                xdotdx, dx2 = np.sum(x*dx), np.sum(dx*dx)
+                a = dx2 # > 0
+                b = 2*xdotdx 
+                c = x2 - borders[ssx+1]**2 # > 0
+                y = (-b-np.sqrt(b**2-4*a*c))/2/a*(1.+1e-3)
+                # update a new x
+                x = x + y*dx
+                ss = get_status(x)
+                #print('2',end='')
 
-
+            # inward    
+            elif ycheck > 1 and ssx < ssxp:
+                a = dx2 # > 0
+                b = 2*xdotdx  # < 0
+                c = x2 - borders[ssx+1]**2 # >0
+                y = (-b-np.sqrt(b**2-4*a*c))/2/a*(1.+1e-3)
+                x = x + y*dx
+                ss = get_status(x)
+                #print('3',end='')
+                
             else:
+                x = x + dx                    
+                ss = get_status(x)
                 
-                dx = np.array([rawdis*st*np.cos(phi) , rawdis*st*np.sin(phi) ,rawdis*ct])
-                x2 ,xdotdx, dx2 = np.sum(x*x) , np.sum(x*dx), np.sum(dx*dx) 
-
-                ycheck = - xdotdx/dx2
-                xcheck = ycheck*dx + x
-                ssx , ssxp , ssxc = get_status(x),get_status(x+dx),get_status(xcheck)
+                beta = np.random.rand()*2*np.pi
+                sb = np.sin(beta)
+                cb = np.cos(beta)   
+                                 
+                v_prop = np.sqrt(v_prop2)
+                ca = (v**2 + v_prop2 - qs**2/self.mdm**2 )/2./v/v_prop
+                sa = np.sqrt(1-ca**2)
                 
-                # outward
-                if ycheck <= 0 and ssx > ssxp:
-                    a = dx2 # > 0
-                    b = 2*xdotdx
-                    c = x2 - borders[ssx]**2 # < 0 
-                    y = (-b+np.sqrt(b**2-4*a*c))/2/a*(1.+1e-3)
-                    # update a new x
-                    x = x + y*dx
-                    ss = get_status(x)
-                    print('1',end='')
-                    
-                    
-                # inward
-                elif (ycheck > 0 and ycheck <= 1) and ssx < ssxc:
-                    dx = ycheck*dx
-                    xdotdx, dx2 = np.sum(x*dx), np.sum(dx*dx)
-                    a = dx2 # > 0
-                    b = 2*xdotdx 
-                    c = x2 - borders[ssx+1]**2 # > 0
-                    y = (-b-np.sqrt(b**2-4*a*c))/2/a*(1.+1e-3)
-                    # update a new x
-                    x = x + y*dx
-                    ss = get_status(x)
-                    print('2',end='')
-
-                # inward    
-                elif ycheck > 1 and ssx < ssxp:
-                    a = dx2 # > 0
-                    b = 2*xdotdx  # < 0
-                    c = x2 - borders[ssx+1]**2 # >0
-                    y = (-b-np.sqrt(b**2-4*a*c))/2/a*(1.+1e-3)
-                    x = x + y*dx
-                    ss = get_status(x)
-                    print('3',end='')
-                    
-                else:
-                    x = x + dx                    
-                    ss = get_status(x)
-                    
-                    beta = np.random.rand()*2*np.pi
-                    sb = np.sin(beta)
-                    cb = np.cos(beta)   
-                                     
-                    v_prop = np.sqrt(v_prop2)
-                    ca = (v**2 + v_prop2 - qs**2/self.mdm**2 )/2./v/v_prop
-                    sa = np.sqrt(1-ca**2)
-                    
-                    phi +=  np.arctan2(sa*sb,st*ca + ct*sa*cb)
-                    ct = ct*ca - st*sa*cb
-                    st = np.sqrt(1.-ct**2)
-                    
-                    v = v_prop
-                    #print('4',end='')
-                    
-                    
-                save_data(v,ca,phi,ct,st,x,ss)
-                count += 1
+                phi +=  np.arctan2(sa*sb,st*ca + ct*sa*cb)
+                ct = ct*ca - st*sa*cb
+                st = np.sqrt(1.-ct**2)
+                
+                v = v_prop
+                #print('4',end='')
+                
+                
+            save_data(v,ca,phi,ct,st,x,ss)
+            count += 1
                     
                      
 
@@ -371,7 +353,7 @@ class EarthEvents:
 
     def inSIG2rhos(self):
         
-        v_vec = np.linspace(1e-20,0.2,100)
+        v_vec = np.logspace(np.log10(1e-20),np.log10(0.2),100)
         nsig2rhos_mantle=[]
         nsig2rhos_core=[]
         print('| Calculating \int\sig_{ion} ...')

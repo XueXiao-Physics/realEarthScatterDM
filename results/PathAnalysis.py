@@ -31,18 +31,22 @@ class PathAnalysis:
 
             for i in range(Npaths):
                 path = rawpaths[i]
-                Paths[i,:,:len(path[0])] = path
-                Paths[i,:,len(path[0]):] = path[:,-1][:,None]
+                Paths[i,:4,:len(path[0])] = path[:4,:]
+                Paths[i,:4,len(path[0]):] = path[:4,-1][:,None]
             self.Paths = Paths
 
         
 
     def cut_sphere(self):
-
-        detector_depth = 6371. - 1.6
+    
+        Earth_radius = 6371.
+        detector_depth = 1.6
+        detector_pos = Earth_radius-detector_depth
+        print('set Earth\'s radius', '%.1f'%Earth_radius,'km')
+        print('set detector depth at', '%.1f'%detector_depth,'km')
         d2r0 = np.linalg.norm(self.Paths[:,:3],axis = 1)
         velo = self.Paths[:,3,:]
-        insphere = d2r0 <= detector_depth
+        insphere = d2r0 <= detector_pos
         ifhit = np.where(np.diff(insphere)!=0)
 
         # get where exactly the particle hit the sphere
@@ -54,7 +58,7 @@ class PathAnalysis:
         # the math
         a = np.sum(dhitpos*dhitpos , axis=1)
         b = 2*np.sum(dhitpos*hitpos_before , axis=1)
-        c = np.sum(hitpos_before*hitpos_before , axis=1) - detector_depth**2
+        c = np.sum(hitpos_before*hitpos_before , axis=1) - detector_pos**2
         y1 = ( -b+np.sqrt(b**2 - 4*a*c) )/2/a
         y2 = ( -b-np.sqrt(b**2 - 4*a*c) )/2/a
         y = np.where( c>0 , y2 , y1)
@@ -63,7 +67,7 @@ class PathAnalysis:
         self.hitvelo = hitvelo
         self.hitpos = hitpos
         
-        self.hitctheta = hitpos[:,2]/detector_depth
+        self.hitctheta = hitpos[:,2]/detector_pos
         
 
         
@@ -75,7 +79,7 @@ if __name__=='__main__':
     s.load_paths()
     s.cut_sphere()
     np.savetxt(filename+'.txt',np.vstack([s.hitctheta,s.hitvelo]).T)
-    plt.hist2d(s.hitvelo,s.hitctheta,bins=20)
+    plt.hist2d(s.hitvelo,s.hitctheta,bins=40)
     plt.xlabel('velo')
     plt.ylabel('ctheta')
     plt.savefig(filename+'.jpg')

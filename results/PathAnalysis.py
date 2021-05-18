@@ -65,7 +65,7 @@ class PathAnalysis:
         
         msk_h1i = np.where( ifBin*(1-ifAin) ) 
         msk_h1o = np.where( (1-ifBin)*ifAin )
-        msk_h2 = np.where((1-(ib<absA)*(ib<absB))*ifbin*(1-ifAin)*(1-ifBin))
+        msk_h2  = np.where((ib<absA)*(ib<absB)*ifbin*(1-ifAin)*(1-ifBin))
         print('{:<40}'.format('N of micro paths that inwardly hit once'),msk_h1i[0].shape[0])
         print('{:<40}'.format('N of micro paths that outwardly hit once'),msk_h1o[0].shape[0])
         print('{:<40}'.format('N of micro paths that hit twice'),msk_h2[0].shape[0])
@@ -96,22 +96,30 @@ class PathAnalysis:
         
         hitpos_1 = x_1[:,None]*B[msk_h1i[0],:,msk_h1i[1]] + (1-x_1)[:,None]*A[msk_h1i[0],:,msk_h1i[1]]
         hitvelo_1 = self.Paths[msk_h1i[0],3,msk_h1i[1]]
+        nvelo_1 = BminusA[msk_h1i[0],:,msk_h1i[1]]/absBminusA[msk_h1i[0],None,msk_h1i[1]]
+        weight_1 = 1/np.abs(np.sum(hitpos_1*nvelo_1,axis=1)/detector_pos)
         
         
         hitpos_2 = x_2[:,None]*B[msk_h1o[0],:,msk_h1o[1]] + (1-x_2)[:,None]*A[msk_h1o[0],:,msk_h1o[1]]
         hitvelo_2 = self.Paths[msk_h1o[0],3,msk_h1o[1]]
+        nvelo_2 = BminusA[msk_h1o[0],:,msk_h1o[1]]/absBminusA[msk_h1o[0],None,msk_h1o[1]]
+        weight_2 = 1/np.abs(np.sum(hitpos_2*nvelo_2,axis=1)/detector_pos)
         
         hitpos_3 = x_3[:,None]*B[msk_h2[0],:,msk_h2[1]] + (1-x_3)[:,None]*A[msk_h2[0],:,msk_h2[1]]
-        hitvelo_3 = self.Paths[msk_h2[0],3,msk_h2[1]]        
+        hitvelo_3 = self.Paths[msk_h2[0],3,msk_h2[1]]  
+        nvelo_3 = BminusA[msk_h2[0],:,msk_h2[1]]/absBminusA[msk_h2[0],None,msk_h2[1]]
+        weight_3 = 1/np.abs(np.sum(hitpos_3*nvelo_3,axis=1)/detector_pos)
         
         hitpos_4 = x_4[:,None]*B[msk_h2[0],:,msk_h2[1]] + (1-x_4)[:,None]*A[msk_h2[0],:,msk_h2[1]]
         hitvelo_4 = self.Paths[msk_h2[0],3,msk_h2[1]]     
-        
+        nvelo_4 = BminusA[msk_h2[0],:,msk_h2[1]]/absBminusA[msk_h2[0],None,msk_h2[1]]
+        weight_4 = 1/np.abs(np.sum(hitpos_4*nvelo_4,axis=1)/detector_pos)
         
         
         self.hitpos = np.concatenate([hitpos_1,hitpos_2,hitpos_3,hitpos_4])
         self.hitvelo = np.concatenate([hitvelo_1,hitvelo_2,hitvelo_3,hitvelo_4])
         self.hitctheta = self.hitpos[:,2]/detector_pos
+        self.weight = np.concatenate([weight_1,weight_2,weight_3,weight_4])
 
        
         
@@ -127,7 +135,7 @@ if __name__=='__main__':
     s.load_paths()
     s.cut_sphere()
     np.savetxt(filename+'.txt',np.vstack([s.hitctheta,s.hitvelo]).T)
-    plt.hist2d(s.hitvelo,s.hitctheta,bins=40,cmap='Reds')
+    plt.hist2d(s.hitvelo,s.hitctheta,weights = s.weight,bins=40,cmap='Reds')
     plt.xlabel('velo')
     plt.ylabel('ctheta')
     plt.ylim(-1,1)

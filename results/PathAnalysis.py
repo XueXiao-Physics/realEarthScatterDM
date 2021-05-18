@@ -70,7 +70,7 @@ class PathAnalysis:
         
         msk_h1i = np.where( ifBin*(1-ifAin) ) 
         msk_h1o = np.where( (1-ifBin)*ifAin )
-        msk_h2  = np.where((b<0)*(c<0)*((2*a+b)>0)*((a+b+c)>0))
+        msk_h2  = np.where( (b<=0)*(c>0)*((2*a+b)>0)*((a+b+c)>0)*ifbin )
         print('{:<40}'.format('N of micro paths that inwardly hit once'),msk_h1i[0].shape[0])
         print('{:<40}'.format('N of micro paths that outwardly hit once'),msk_h1o[0].shape[0])
         print('{:<40}'.format('N of micro paths that hit twice'),msk_h2[0].shape[0])

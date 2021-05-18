@@ -62,18 +62,20 @@ class PathAnalysis:
         ifbin = ib<detector_pos
         #test = np.argsort([absA,absB,ib],axis=0)
         
-        
-        msk_h1i = np.where( ifBin*(1-ifAin) ) 
-        msk_h1o = np.where( (1-ifBin)*ifAin )
-        msk_h2  = np.where((ib<absA)*(ib<absB)*ifbin*(1-ifAin)*(1-ifBin))
-        print('{:<40}'.format('N of micro paths that inwardly hit once'),msk_h1i[0].shape[0])
-        print('{:<40}'.format('N of micro paths that outwardly hit once'),msk_h1o[0].shape[0])
-        print('{:<40}'.format('N of micro paths that hit twice'),msk_h2[0].shape[0])
-        
         # helping find the point(s)
         a = absBminusA**2
         b = 2*np.sum(A*(B-A),axis=1)
         c = absA**2 - detector_pos**2
+        
+        
+        msk_h1i = np.where( ifBin*(1-ifAin) ) 
+        msk_h1o = np.where( (1-ifBin)*ifAin )
+        msk_h2  = np.where((b<0)*(c<0)*((2*a+b)>0)*((a+b+c)>0))
+        print('{:<40}'.format('N of micro paths that inwardly hit once'),msk_h1i[0].shape[0])
+        print('{:<40}'.format('N of micro paths that outwardly hit once'),msk_h1o[0].shape[0])
+        print('{:<40}'.format('N of micro paths that hit twice'),msk_h2[0].shape[0])
+        
+
        
         
         a1i = a[msk_h1i[0],msk_h1i[1]]
@@ -99,7 +101,6 @@ class PathAnalysis:
         nvelo_1 = BminusA[msk_h1i[0],:,msk_h1i[1]]/absBminusA[msk_h1i[0],None,msk_h1i[1]]
         weight_1 = 1/np.abs(np.sum(hitpos_1*nvelo_1,axis=1)/detector_pos)
         
-        
         hitpos_2 = x_2[:,None]*B[msk_h1o[0],:,msk_h1o[1]] + (1-x_2)[:,None]*A[msk_h1o[0],:,msk_h1o[1]]
         hitvelo_2 = self.Paths[msk_h1o[0],3,msk_h1o[1]]
         nvelo_2 = BminusA[msk_h1o[0],:,msk_h1o[1]]/absBminusA[msk_h1o[0],None,msk_h1o[1]]
@@ -114,7 +115,6 @@ class PathAnalysis:
         hitvelo_4 = self.Paths[msk_h2[0],3,msk_h2[1]]     
         nvelo_4 = BminusA[msk_h2[0],:,msk_h2[1]]/absBminusA[msk_h2[0],None,msk_h2[1]]
         weight_4 = 1/np.abs(np.sum(hitpos_4*nvelo_4,axis=1)/detector_pos)
-        
         
         self.hitpos = np.concatenate([hitpos_1,hitpos_2,hitpos_3,hitpos_4])
         self.hitvelo = np.concatenate([hitvelo_1,hitvelo_2,hitvelo_3,hitvelo_4])

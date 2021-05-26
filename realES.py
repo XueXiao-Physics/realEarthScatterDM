@@ -254,14 +254,15 @@ class EarthEvents:
             
             mask1 = np.isreal(solution_list)  
             mask2 = solution_list>=0
+            mask3 = solution_list<0
             
-            true_solutions = solution_list[np.where(mask1*mask2)] 
+            true_solutions = solution_list[np.where(mask1*mask2*mask3)] 
             
             if true_solutions.shape[0] != 0:
                 
-                # Take the first solution
+                # Take the first real 0 <= solution < 1
                 solution = np.real(np.min(true_solutions))
-                x = x + solution*dx*(1.+1e-5)
+                x = x + solution*dx*(1.+1e-5) # t
                 ss = get_status(x)
                 
             else:

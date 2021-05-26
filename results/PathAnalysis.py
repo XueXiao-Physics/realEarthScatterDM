@@ -50,76 +50,52 @@ class PathAnalysis:
         B = self.Paths[:,:3,1:]
         BminusA = B-A
         absBminusA = np.linalg.norm(BminusA,axis=1)
-        absBcrossA = np.linalg.norm(np.cross(A,B,axis=1),axis=1)
-        # impact factor b
-        ib = absBcrossA/absBminusA
-        
-        #Check if the line is inward/in & out/outward
+        absBminusA[absBminusA==0]=np.nan
         absA = np.linalg.norm(A,axis=1)
-        absB = np.linalg.norm(B,axis=1)
-        ifAin = absA<detector_pos
-        ifBin = absB<detector_pos
-        ifbin = ib<detector_pos
+
         #test = np.argsort([absA,absB,ib],axis=0)
         
         # helping find the point(s)
-        a = absBminusA**2
-        b = 2*np.sum(A*(B-A),axis=1)
-        c = absA**2 - detector_pos**2
+        
+        a = absBminusA**2 + 0j
+        b = 2*np.sum(A*(B-A),axis=1) + 0j
+        c = absA**2 - detector_pos**2 + 0j
+        
+        solution_1 = (-b-np.sqrt(b**2-4*a*c))/2/a
+        solution_2 = (-b+np.sqrt(b**2-4*a*c))/2/a
+        solution_list = np.array([solution_1,solution_2])
+        mask1 =  (solution_list>=0)*(solution_list<1)
+        mask2 = np.isreal(solution_list)
+        Mask = mask1*mask2
         
         
-        msk_h1i = np.where( ifBin*(1-ifAin) ) 
-        msk_h1o = np.where( (1-ifBin)*ifAin )
-        msk_h2  = np.where( (b<=0)*(c>0)*((2*a+b)>0)*((a+b+c)>0)*ifbin )
-        print('{:<40}'.format('N of micro paths that inwardly hit once'),msk_h1i[0].shape[0])
-        print('{:<40}'.format('N of micro paths that outwardly hit once'),msk_h1o[0].shape[0])
-        print('{:<40}'.format('N of micro paths that hit twice'),msk_h2[0].shape[0])
         
 
-       
+        print('{:<44}'.format('N of micro paths that inwardly hit border once'),np.sum(  (Mask[0,:]==1)*(Mask[1,:]==0)  ))
+        print('{:<44}'.format('N of micro paths that outwardly hit border once'),np.sum(  (Mask[0,:]==0)*(Mask[1,:]==1)  ))
+        print('{:<44}'.format('N of micro paths that hit border twice'),np.sum( np.sum( Mask ,axis=0)==2 ))
         
-        a1i = a[msk_h1i[0],msk_h1i[1]]
-        b1i = b[msk_h1i[0],msk_h1i[1]]
-        c1i = c[msk_h1i[0],msk_h1i[1]]
+        ihit1 = np.where(Mask[0])
+        ihit2 = np.where(Mask[1])
         
-        a1o = a[msk_h1o[0],msk_h1o[1]]
-        b1o = b[msk_h1o[0],msk_h1o[1]]
-        c1o = c[msk_h1o[0],msk_h1o[1]]
+        hitpos1 = A[ihit1[0],:,ihit1[1]] + BminusA[ihit1[0],:,ihit1[1]]*np.real(solution_1[ihit1][:,None])
+        hitpos2 = A[ihit2[0],:,ihit2[1]] + BminusA[ihit2[0],:,ihit2[1]]*np.real(solution_2[ihit2][:,None])
         
-        a2 = a[msk_h2[0],msk_h2[1]]
-        b2 = b[msk_h2[0],msk_h2[1]]
-        c2 = c[msk_h2[0],msk_h2[1]]        
+        hitvelo1 = self.Paths[ihit1[0],3,ihit1[1]]
+        hitvelo2 = self.Paths[ihit2[0],3,ihit2[1]]
+        
+        nvelo1 = BminusA[ihit1[0],:,ihit1[1]]/absBminusA[ihit1[0],None,ihit1[1]]
+        nvelo2 = BminusA[ihit2[0],:,ihit2[1]]/absBminusA[ihit2[0],None,ihit2[1]]
+        
+        weight1 = 1/np.abs(np.sum(hitpos1*nvelo1,axis=1)/detector_pos)
+        weight2 = 1/np.abs(np.sum(hitpos2*nvelo2,axis=1)/detector_pos)
         
         
-        x_1 = (-b1i-np.sqrt(b1i**2-4*a1i*c1i))/2/a1i 
-        x_2 = (-b1o+np.sqrt(b1o**2-4*a1o*c1o))/2/a1o
-        x_3 = (-b2-np.sqrt(b2**2-4*a2*c2))/2/a2 
-        x_4 = (-b2+np.sqrt(b2**2-4*a2*c2))/2/a2
         
-        hitpos_1 = x_1[:,None]*B[msk_h1i[0],:,msk_h1i[1]] + (1-x_1)[:,None]*A[msk_h1i[0],:,msk_h1i[1]]
-        hitvelo_1 = self.Paths[msk_h1i[0],3,msk_h1i[1]]
-        nvelo_1 = BminusA[msk_h1i[0],:,msk_h1i[1]]/absBminusA[msk_h1i[0],None,msk_h1i[1]]
-        weight_1 = 1/np.abs(np.sum(hitpos_1*nvelo_1,axis=1)/detector_pos)
-        
-        hitpos_2 = x_2[:,None]*B[msk_h1o[0],:,msk_h1o[1]] + (1-x_2)[:,None]*A[msk_h1o[0],:,msk_h1o[1]]
-        hitvelo_2 = self.Paths[msk_h1o[0],3,msk_h1o[1]]
-        nvelo_2 = BminusA[msk_h1o[0],:,msk_h1o[1]]/absBminusA[msk_h1o[0],None,msk_h1o[1]]
-        weight_2 = 1/np.abs(np.sum(hitpos_2*nvelo_2,axis=1)/detector_pos)
-        
-        hitpos_3 = x_3[:,None]*B[msk_h2[0],:,msk_h2[1]] + (1-x_3)[:,None]*A[msk_h2[0],:,msk_h2[1]]
-        hitvelo_3 = self.Paths[msk_h2[0],3,msk_h2[1]]  
-        nvelo_3 = BminusA[msk_h2[0],:,msk_h2[1]]/absBminusA[msk_h2[0],None,msk_h2[1]]
-        weight_3 = 1/np.abs(np.sum(hitpos_3*nvelo_3,axis=1)/detector_pos)
-        
-        hitpos_4 = x_4[:,None]*B[msk_h2[0],:,msk_h2[1]] + (1-x_4)[:,None]*A[msk_h2[0],:,msk_h2[1]]
-        hitvelo_4 = self.Paths[msk_h2[0],3,msk_h2[1]]     
-        nvelo_4 = BminusA[msk_h2[0],:,msk_h2[1]]/absBminusA[msk_h2[0],None,msk_h2[1]]
-        weight_4 = 1/np.abs(np.sum(hitpos_4*nvelo_4,axis=1)/detector_pos)
-        
-        self.hitpos = np.concatenate([hitpos_1,hitpos_2,hitpos_3,hitpos_4])
-        self.hitvelo = np.concatenate([hitvelo_1,hitvelo_2,hitvelo_3,hitvelo_4])
+        self.hitpos = np.concatenate([hitpos1,hitpos2])
+        self.hitvelo = np.concatenate([hitvelo1,hitvelo2])
         self.hitctheta = self.hitpos[:,2]/detector_pos
-        self.weight = np.concatenate([weight_1,weight_2,weight_3,weight_4])
+        self.weight = np.concatenate([weight1,weight2])
 
        
         

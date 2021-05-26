@@ -232,45 +232,34 @@ class EarthEvents:
             dx = np.array([rawdis*st*np.cos(phi) , rawdis*st*np.sin(phi) ,rawdis*ct])
             x2 ,xdotdx, dx2 = np.sum(x*x) , np.sum(x*dx), np.sum(dx*dx) 
 
-            ycheck = - xdotdx/dx2
-            xcheck = ycheck*dx + x
-            ssx , ssxp , ssxc = get_status(x),get_status(x+dx),get_status(xcheck)
-
-            # outward
-            if ycheck <= 0 and ssx > ssxp:
-                a = dx2 # > 0
-                b = 2*xdotdx
-                c = x2 - borders[ssx]**2 # < 0 
-                y = (-b+np.sqrt(b**2-4*a*c))/2/a*(1.+1e-3)
-                # update a new x
-                x = x + y*dx
+            #ycheck = - xdotdx/dx2
+            #xcheck = ycheck*dx + x
+            #ssx , ssxp , ssxc = get_status(x),get_status(x+dx),get_status(xcheck)
+            
+            a = dx2 + 0j
+            b = 2*xdotdx + 0j
+            c1 = x2 - self.rEarth**2 + 0j
+            c2 = x2 - self.rCore**2 + 0j
+            
+            solution_1 = (-b-np.sqrt(b**2-4*a*c1))/2/a
+            solution_2 = (-b+np.sqrt(b**2-4*a*c1))/2/a
+            solution_3 = (-b-np.sqrt(b**2-4*a*c2))/2/a
+            solution_4 = (-b+np.sqrt(b**2-4*a*c2))/2/a
+            
+            solution_list = np.array([solution_1,solution_2,solution_3,solution_4])
+            
+            mask1 = np.isreal(solution_list)  
+            mask2 = solution_list>=0
+            
+            true_solutions = solution_list[np.where(mask1*mask2)] 
+            
+            if true_solutions.shape[0] != 0:
+                
+                # Take the first solution
+                solution = np.real(np.min(true_solutions))
+                x = x + solution*dx*(1.+1e-5)
                 ss = get_status(x)
-                print('1',end='')
-
-
-            # inward
-            elif (ycheck > 0 and ycheck <= 1) and ssx < ssxc:
-                dx = ycheck*dx
-                xdotdx, dx2 = np.sum(x*dx), np.sum(dx*dx)
-                a = dx2 # > 0
-                b = 2*xdotdx 
-                c = x2 - borders[ssx+1]**2 # > 0
-                y = (-b-np.sqrt(b**2-4*a*c))/2/a*(1.+1e-3)
-                # update a new x
-                x = x + y*dx
-                ss = get_status(x)
-                #print('2',end='')
-
-            # inward    
-            elif ycheck > 1 and ssx < ssxp:
-                a = dx2 # > 0
-                b = 2*xdotdx  # < 0
-                c = x2 - borders[ssx+1]**2 # >0
-                y = (-b-np.sqrt(b**2-4*a*c))/2/a*(1.+1e-3)
-                x = x + y*dx
-                ss = get_status(x)
-                #print('3',end='')
-
+                
             else:
                 x = x + dx                    
                 ss = get_status(x)
@@ -281,16 +270,16 @@ class EarthEvents:
 
                 v_prop = np.sqrt(v_prop2)
                 ca = (v**2 + v_prop2 - qs**2/self.mdm**2 )/2./v/v_prop
-                sa = np.sqrt(1-ca**2)
+                sa = np.sqrt(1.-ca**2)
 
                 phi +=  np.arctan2(sa*sb,st*ca + ct*sa*cb)
                 ct = ct*ca - st*sa*cb
                 st = np.sqrt(1.-ct**2)
 
-                v = v_prop
-                #print('4',end='')
+                v = v_prop                
 
-
+                  
+            
             save_data(v,ca,phi,ct,st,x,ss)
             count += 1
                     

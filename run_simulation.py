@@ -10,7 +10,6 @@ input_vals = input_params.split(',')
 
 mdm = float(input_vals[0])
 sige = float(input_vals[1])
-rawN = 2**21
 N = int(input_vals[3])
 v0 = float(input_vals[2])
 r_init = 6371.
@@ -33,7 +32,7 @@ s = EarthEvents(mdm,sige)
 
 
 s.load_Ktot()
-s.calc_sum_ndsig2rho_v2dlnEdlnq()
+s.calc_sum_ndsig2rho_v2dlnEdlnq(0)
 s.inSIG2rhos()
 
 input(' >>> Press Enter to Start Simulaton. <<<')

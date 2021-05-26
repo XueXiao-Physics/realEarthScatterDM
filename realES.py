@@ -73,30 +73,34 @@ class EarthEvents:
         
         str1 ='| <ne> * sige (core)'
         str2 ='| <ne> * sige (mantle)'
-        self.vmin = np.sqrt(2*self.ER[1]/self.mdm)
-        
+        ER_vmin = np.sqrt(2*self.ER[1]/self.mdm)
+        hard_vmin = 1e-4
+        self.vmin=max(ER_vmin,hard_vmin)
         
         print('{:<36}'.format(str1), '= %.2e'%(self.sige*out1[6]*out2[2]),'(1/cm)|')
         print('{:<36}'.format(str2), '= %.2e'%(self.sige*out1[7]*out2[3]),'(1/cm)|')
         
-        print('{:<36}'.format('| v_min caused by ERmin'),': %.2e'%self.vmin )
+        print('{:<36}'.format('| v_min caused by ERmin'),': %.2e'%ER_vmin )      
+        print('{:<36}'.format('| v_min hard cut'),': %.2e'%hard_vmin )
 
+
+        
 
 
 ###################################################
 #           Get dsig                              #
 ###################################################
 
-    def calc_sum_ndsig2rho_v2dlnEdlnq(self):
+    def calc_sum_ndsig2rho_v2dlnEdlnq(self,n):
 
         mu = me*self.mdm/(me+self.mdm)    
 
         # v^2*dsig/dlogq/dlogE * n/d(rho)
         self.sum_ndsig2rho_v2dlnEdlnq_mantle = self.sige*me*a0**2/(2*mu**2) * self.q[None,:] \
-                        * self.K_mantle * self.q[None,:] * self.ER[:,None]
+                * self.K_mantle * self.q[None,:] * self.ER[:,None]* (self.q[None,:]*a0)**n
 
         self.sum_ndsig2rho_v2dlnEdlnq_core = self.sige*me*a0**2/(2*mu**2) * self.q[None,:] \
-                        * self.K_core * self.q[None,:] * self.ER[:,None]
+                * self.K_core * self.q[None,:] * self.ER[:,None]* (self.q[None,:]*a0)**n
 
 
 

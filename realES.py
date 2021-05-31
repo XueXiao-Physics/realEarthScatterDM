@@ -144,7 +144,7 @@ class EarthEvents:
         
         ERs = self.ER[x_sel]
         qs = self.q[y_sel]
-        msk2 = np.where(ERs<(self.mdm*v-qs**2/2/self.mdm))
+        msk2 = np.where(ERs<(qs*v-qs**2/2/self.mdm))
         
         self.ER_sample_core = ERs[msk2]
         self.q_sample_core = qs[msk2]
@@ -275,6 +275,7 @@ class EarthEvents:
 
                 v_prop = np.sqrt(v_prop2)
                 ca = (v**2 + v_prop2 - qs**2/self.mdm**2 )/2./v/v_prop
+                print(ca)
                 sa = np.sqrt(1.-ca**2)
 
                 phi +=  np.arctan2(sa*sb,st*ca + ct*sa*cb)

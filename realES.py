@@ -275,7 +275,6 @@ class EarthEvents:
 
                 v_prop = np.sqrt(v_prop2)
                 ca = (v**2 + v_prop2 - qs**2/self.mdm**2 )/2./v/v_prop
-                print(ca)
                 sa = np.sqrt(1.-ca**2)
 
                 phi +=  np.arctan2(sa*sb,st*ca + ct*sa*cb)

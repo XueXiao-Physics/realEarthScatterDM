@@ -87,8 +87,8 @@ class PathAnalysis:
         nvelo1 = BminusA[ihit1[0],:,ihit1[1]]/absBminusA[ihit1[0],None,ihit1[1]]
         nvelo2 = BminusA[ihit2[0],:,ihit2[1]]/absBminusA[ihit2[0],None,ihit2[1]]
         
-        weight1 = 1/np.abs(np.sum(hitpos1*nvelo1,axis=1)/detector_pos)
-        weight2 = 1/np.abs(np.sum(hitpos2*nvelo2,axis=1)/detector_pos)
+        weight1 = 1/np.abs(np.sum(hitpos1*nvelo1,axis=1)/detector_pos)/hitvelo1
+        weight2 = 1/np.abs(np.sum(hitpos2*nvelo2,axis=1)/detector_pos)/hitvelo2
         
         
         
@@ -111,7 +111,7 @@ if __name__=='__main__':
     s.load_paths()
     s.cut_sphere()
     np.savetxt(filename+'.txt',np.vstack([s.hitctheta,s.hitvelo]).T)
-    plt.hist2d(s.hitvelo,s.hitctheta,weights = s.weight,bins=40,cmap='Reds')
+    plt.hist2d(s.hitvelo,s.hitctheta,weights = s.weight,bins=[np.linspace(1e-3,0.02),np.linspace(-1,1)],cmap='afmhot')
     plt.xlabel('velo')
     plt.ylabel('ctheta')
     plt.ylim(-1,1)

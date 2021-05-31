@@ -254,7 +254,7 @@ class EarthEvents:
             
             mask1 = np.isreal(solution_list)  
             mask2 = solution_list>=0
-            mask3 = solution_list<0
+            mask3 = solution_list<1
             
             true_solutions = solution_list[np.where(mask1*mask2*mask3)] 
             

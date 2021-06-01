@@ -111,7 +111,7 @@ if __name__=='__main__':
     s.load_paths()
     s.cut_sphere()
     np.savetxt(filename+'.txt',np.vstack([s.hitctheta,s.hitvelo]).T)
-    plt.hist2d(s.hitvelo,s.hitctheta,weights = s.weight,bins=[np.linspace(1e-3,0.02),np.linspace(-1,1)],cmap='afmhot')
+    plt.hist2d(s.hitvelo,s.hitctheta,weights = s.weight,bins=[np.linspace(1e-3,0.025),np.linspace(-1,1)],cmap='afmhot')
     plt.xlabel('velo')
     plt.ylabel('ctheta')
     plt.ylim(-1,1)

@@ -214,7 +214,7 @@ class EarthEvents:
         ss = get_status(x0)
         save_data(v,ca,phi,ct,st,x,ss)
         
-        count = 1 # from 1 
+        count = 0 # from 1 
         while ss!=0 and v>self.vmin:
             N1,N2 = self.direct_sample(v)
             while N1==0 or N2 ==0:
@@ -281,12 +281,13 @@ class EarthEvents:
                 ct = ct*ca - st*sa*cb
                 st = np.sqrt(1.-ct**2)
 
-                v = v_prop                
+                v = v_prop          
+                count += 1      
 
                   
             
             save_data(v,ca,phi,ct,st,x,ss)
-            count += 1
+            
                     
                      
 

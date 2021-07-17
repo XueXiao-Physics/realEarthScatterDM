@@ -110,7 +110,7 @@ class EarthEvents:
 #           Sampling methods                      #
 ###################################################
 
-    def direct_sample(self,v,N=10000):
+    def direct_sample(self,v,N=100000):
 
         ERmax = self.mdm*v**2/2
         cut = np.max(np.where(self.ER <= ERmax))
@@ -219,7 +219,7 @@ class EarthEvents:
             N1,N2 = self.direct_sample(v)
             while N1==0 or N2 ==0:
                 N1,N2 = self.direct_sample(v)   
-                
+
             r = np.linalg.norm(x)
             # choose what to sample (or break the loop directly)
             if ss == 1:

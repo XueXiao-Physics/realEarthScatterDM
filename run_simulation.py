@@ -88,7 +88,7 @@ def single_job(_Nstart,_N,_icore):
 
 
 
-ncores = 5 # cpu cores 
+ncores = ncores # cpu cores 
 jobs = []
 job_add = np.zeros(ncores,dtype=int)
 job_add[:N%ncores] =1 

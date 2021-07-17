@@ -74,7 +74,7 @@ class EarthEvents:
         str1 ='| <ne> * sige (core)'
         str2 ='| <ne> * sige (mantle)'
         ER_vmin = np.sqrt(2*self.ER[1]/self.mdm)
-        hard_vmin = 1e-4
+        hard_vmin = 1e-3
         self.vmin=max(ER_vmin,hard_vmin)
         
         print('{:<36}'.format(str1), '= %.2e'%(self.sige*out1[6]*out2[2]),'(1/cm)|')

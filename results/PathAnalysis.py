@@ -11,6 +11,8 @@ class PathAnalysis:
     def __init__(self,filename):
 
         self.filename = filename
+        self.Earth_radius = 6371.
+        self.detector_depth = 1.6
         if os.path.exists(filename)==False:
             print('error, file doesn\'t exist.')
 
@@ -39,11 +41,10 @@ class PathAnalysis:
         
 
     def cut_sphere(self):
-        Earth_radius = 6371.
-        detector_depth = 1.6
-        detector_pos = Earth_radius-detector_depth
-        print('set Earth\'s radius', '%.1f'%Earth_radius,'km')
-        print('set detector depth at', '%.1f'%detector_depth,'km')
+
+        detector_pos = self.Earth_radius-self.detector_depth
+        print('set Earth\'s radius', '%.1f'%self.Earth_radius,'km')
+        print('set detector depth at', '%.1f'%self.detector_depth,'km')
         
         # B minus A
         A = self.Paths[:,:3,:-1]
@@ -98,7 +99,38 @@ class PathAnalysis:
         self.weight = np.concatenate([weight1,weight2])
 
        
+    def cut_disc(self,ctheta):
+    
+        stheta = np.sqrt(1-ctheta**2)
+        detector_pos = self.Earth_radius-self.detector_depth
+        z_plane = ctheta*detector_pos
+        if_above = self.Paths[:,2,:] > z_plane
+        if_hit = np.where(np.diff(if_above))
         
+        A = self.Paths[if_hit[0],:,if_hit[1]]
+        B = self.Paths[if_hit[0],:,if_hit[1]+1]
+        D_AB = (B-A)[:,:3]
+        
+        x = D_AB[:,2]
+        y = z_plane - A[:,2]
+        hit_pos = (y/x)[:,None]*D_AB + A[:,:3]
+        hit_cphi = D_AB[:,2]/np.linalg.norm(D_AB,axis=1)
+        hit_velo = A[:,3]
+        
+        
+        hit_dis2core = np.linalg.norm(hit_pos[:,:2],axis=1)
+        if_border = (hit_dis2core>(detector_pos*stheta-0.3)) * (hit_dis2core<(detector_pos*stheta+0.3))
+        hitborder_pos = hit_pos[if_border]
+        hitborder_cphi = hit_cphi[if_border]
+        hitborder_velo = hit_velo[if_border]
+        count = len(hitborder_velo)
+        
+        area = np.pi*(detector_pos*stheta+0.3)**2 - np.pi*( max(0,detector_pos*stheta-0.3) )**2
+          
+        return hitborder_pos , hitborder_velo , hitborder_cphi , ctheta*np.ones(count) , area*np.ones(count)
+        
+        
+            
         
 
 
@@ -109,9 +141,31 @@ if __name__=='__main__':
     filename = sys.argv[1]
     s = PathAnalysis(filename)
     s.load_paths()
+    
+    
+    '''
     s.cut_sphere()
     np.savetxt(filename+'.txt',np.vstack([s.hitctheta,s.hitvelo]).T)
-    plt.hist2d(s.hitvelo,s.hitctheta,weights = s.weight,bins=[np.linspace(1e-3,0.025),np.linspace(-1,1)],cmap='afmhot')
+    plt.hist2d(s.hitvelo,s.hitctheta,weights = s.weight,bins=[np.linspace(1e-3,0.06),np.linspace(-1,1)],cmap='afmhot')
+    plt.xlabel('velo')
+    plt.ylabel('ctheta')
+    plt.ylim(-1,1)
+    plt.savefig(filename+'.jpg')
+    '''
+    _velo = [] 
+    _ctheta = [] 
+    _weight = [] 
+    
+    cthetas = np.linspace(-1,1,1000)
+    for i in range(1000):
+        result = s.cut_disc(cthetas[i]) 
+        try: 
+            _velo.extend(result[1]) 
+            _ctheta.extend(result[3]) 
+            _weight.extend(1/result[2]/result[4]) 
+        except: 
+            pass 
+    plt.hist2d(_velo,_ctheta,weights = _weight,bins=[np.linspace(1e-3,0.06),np.linspace(-1,1)],cmap='afmhot')
     plt.xlabel('velo')
     plt.ylabel('ctheta')
     plt.ylim(-1,1)

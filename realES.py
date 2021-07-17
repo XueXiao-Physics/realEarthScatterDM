@@ -127,7 +127,7 @@ class EarthEvents:
         
         ERs = self.ER[x_sel]
         qs = self.q[y_sel]        
-        msk2 = np.where(ERs<(qs*v-qs**2/2/self.mdm))
+        msk2 = ERs<(qs*v-qs**2/2/self.mdm)
         
         self.ER_sample_mantle = ERs[msk2]
         self.q_sample_mantle = qs[msk2]
@@ -144,7 +144,7 @@ class EarthEvents:
         
         ERs = self.ER[x_sel]
         qs = self.q[y_sel]
-        msk2 = np.where(ERs<(qs*v-qs**2/2/self.mdm))
+        msk2 = ERs<(qs*v-qs**2/2/self.mdm)
         
         self.ER_sample_core = ERs[msk2]
         self.q_sample_core = qs[msk2]

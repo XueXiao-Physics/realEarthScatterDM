@@ -83,7 +83,7 @@ def single_job(_Nstart,_N,_icore):
             print(i+1+N0,'\r',end='')
             
             f.create_dataset('path'+str(i+1+N0),data = np.vstack([s.x.T,s.v,s.ss]))
-            #f.flush()
+            f.flush()
         print('\n')
 
 

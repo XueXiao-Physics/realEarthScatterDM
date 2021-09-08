@@ -99,11 +99,12 @@ class PathAnalysis:
         self.weight = np.concatenate([weight1,weight2])
 
        
-    def cut_disc(self,ctheta):
+    def cut_disc(self,ctheta,offset=0.):
     
         stheta = np.sqrt(1-ctheta**2)
-        detector_pos = self.Earth_radius-self.detector_depth
+        detector_pos = self.Earth_radius-(self.detector_depth + offset)
         z_plane = ctheta*detector_pos
+        
         if_above = self.Paths[:,2,:] > z_plane
         if_hit = np.where(np.diff(if_above))
         
@@ -125,7 +126,7 @@ class PathAnalysis:
         hitborder_velo = hit_velo[if_border]
         count = len(hitborder_velo)
         
-        area = np.pi*(detector_pos*stheta+0.3)**2 - np.pi*( max(0,detector_pos*stheta-0.3) )**2
+        area = (np.pi*(detector_pos*stheta+0.3)**2 - np.pi*( max(0,detector_pos*stheta-0.3) )**2)/(np.pi*self.Earth_radius**2)
           
         return hitborder_pos , hitborder_velo , hitborder_cphi , ctheta*np.ones(count) , area*np.ones(count)
         
@@ -140,10 +141,12 @@ if __name__=='__main__':
     import matplotlib.pyplot as plt
     filename = sys.argv[1]
     s = PathAnalysis(filename)
+    print("Loading Paths")
     s.load_paths()
     
     
     '''
+    print("\nUsing single sphere to cut the DM Paths.")
     s.cut_sphere()
     np.savetxt(filename+'.txt',np.vstack([s.hitctheta,s.hitvelo]).T)
     plt.hist2d(s.hitvelo,s.hitctheta,weights = s.weight,bins=[np.linspace(1e-3,0.06),np.linspace(-1,1)],cmap='afmhot')
@@ -151,13 +154,16 @@ if __name__=='__main__':
     plt.ylabel('ctheta')
     plt.ylim(-1,1)
     plt.savefig(filename+'.jpg')
+    plt.colorbar()
     '''
+    
+    print("\nUsing disks to cut the DM Paths.")
     _velo = [] 
     _ctheta = [] 
     _weight = [] 
     
     cthetas = np.linspace(-1,1,1000)
-    for i in range(1000):
+    for i in tqdm.tqdm(range(len(cthetas))):
         result = s.cut_disc(cthetas[i]) 
         try: 
             _velo.extend(result[1]) 
@@ -165,8 +171,11 @@ if __name__=='__main__':
             _weight.extend(1/result[2]/result[4]) 
         except: 
             pass 
-    plt.hist2d(_velo,_ctheta,weights = _weight,bins=[np.linspace(1e-3,0.06),np.linspace(-1,1)],cmap='afmhot')
+    np.savetxt(filename+'.txt',np.vstack([_ctheta,_velo,_weight]).T)
+    plt.hist2d(_velo,_ctheta,weights = _weight,bins=[np.linspace(1e-3,0.06,40),np.linspace(-1,1,40)],cmap='afmhot')
     plt.xlabel('velo')
     plt.ylabel('ctheta')
     plt.ylim(-1,1)
+    plt.colorbar()
     plt.savefig(filename+'.jpg')
+    

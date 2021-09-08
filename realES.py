@@ -7,7 +7,6 @@ import EarthProfile as EP
 #           Contact:                              #                      
 #                                                 #
 #           Xiao Xue                              #
-#           xuexiao@mail.itp.ac.cn                #
 #           xxueitp@gmail.com                     #
 #                                                 #  
 #           September 2020                        # 
@@ -16,7 +15,7 @@ import EarthProfile as EP
 
 ###################################################
 #           - fun    Load_Events                  #                      
-#           - class  Events                       #
+#           - class  EarthEvents                  #
 ###################################################
 
 
@@ -71,17 +70,18 @@ class EarthEvents:
         self.__mean_rho_core = out2[2]
         self.__mean_rho_mantle = out2[3]
         
-        str1 ='| <ne> * sige (core)'
-        str2 ='| <ne> * sige (mantle)'
+        str1 ='<ne> * sige (core)'
+        str2 ='<ne> * sige (mantle)'
         ER_vmin = np.sqrt(2*self.ER[1]/self.mdm)
         hard_vmin = 1e-3
         self.vmin=max(ER_vmin,hard_vmin)
         
+        
         print('{:<36}'.format(str1), '= %.2e'%(self.sige*out1[6]*out2[2]),'(1/cm)|')
         print('{:<36}'.format(str2), '= %.2e'%(self.sige*out1[7]*out2[3]),'(1/cm)|')
         
-        print('{:<36}'.format('| v_min caused by ERmin'),': %.2e'%ER_vmin )      
-        print('{:<36}'.format('| v_min hard cut'),': %.2e'%hard_vmin )
+        print('{:<36}'.format('v_min from min(ER)'),': %.2e'%ER_vmin )      
+        print('{:<36}'.format('v_min hard cut'),': %.2e'%hard_vmin )
 
 
         
@@ -342,7 +342,7 @@ class EarthEvents:
         v_vec = np.logspace(np.log10(1e-20),np.log10(0.2),100)
         nsig2rhos_mantle=[]
         nsig2rhos_core=[]
-        print('| Calculating \int\sig_{ion} ...')
+        print('Calculating \int\sig_{ion} ...')
         for v in v_vec:
             nsig2rho_mantle, nsig2rho_core = self._SIG(v)
             nsig2rhos_mantle.append(nsig2rho_mantle)
@@ -353,8 +353,8 @@ class EarthEvents:
         self.insig2rho_mantle = lambda v:np.interp(v,v_vec,nsig2rhos_mantle)
         self.insig2rho_core = lambda v:np.interp(v,v_vec,nsig2rhos_core)
 
-        str1 = '| (v=1e-1) \sum <ni*sigi> (core)'
-        str2 = '| (v=1e-1) \sum <ni*sigi> (mantle)'
+        str1 = '(v=1e-1) \sum <ni*sigi> (core)'
+        str2 = '(v=1e-1) \sum <ni*sigi> (mantle)'
         print('{:<36}'.format(str1),'= %.2e'%(self.insig2rho_core(1e-1) * self.__mean_rho_core ),'(1/cm)|')
         print('{:<36}'.format(str2),'= %.2e'%(self.insig2rho_mantle(1e-1)  * self.__mean_rho_mantle),'(1/cm)|')
 

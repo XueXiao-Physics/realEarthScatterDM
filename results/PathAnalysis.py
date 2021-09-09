@@ -2,7 +2,6 @@ import numpy as np
 import h5py
 import os
 import sys
-import tqdm
 
 
 class PathAnalysis:
@@ -25,7 +24,8 @@ class PathAnalysis:
             self.mdm = np.asarray(f['mdm'])
             self.sige = np.asarray(f['sige'])
             rawpaths = []
-            for i in tqdm.tqdm(range(len(keynames))):    
+            for i in range(len(keynames)):
+                print('%i'%(i+1)+' / '+'%i'%len(keynames),'\r',end='')    
                 path = np.asarray( f[keynames[i]] )
                 rawpaths.append( path )
             MaxSteps = max([len(p[0]) for p in rawpaths])
@@ -85,9 +85,11 @@ class PathAnalysis:
         hitvelo1 = self.Paths[ihit1[0],3,ihit1[1]]
         hitvelo2 = self.Paths[ihit2[0],3,ihit2[1]]
         
+        # the unit-velocity n_dm of the dark matter particle when hitting the border
         nvelo1 = BminusA[ihit1[0],:,ihit1[1]]/absBminusA[ihit1[0],None,ihit1[1]]
         nvelo2 = BminusA[ihit2[0],:,ihit2[1]]/absBminusA[ihit2[0],None,ihit2[1]]
         
+        # n_dm \dot n_sphere 
         weight1 = 1/np.abs(np.sum(hitpos1*nvelo1,axis=1)/detector_pos)
         weight2 = 1/np.abs(np.sum(hitpos2*nvelo2,axis=1)/detector_pos)
         
@@ -163,7 +165,8 @@ if __name__=='__main__':
     _weight = [] 
     
     cthetas = np.linspace(-1,1,1000)
-    for i in tqdm.tqdm(range(len(cthetas))):
+    for i in range(len(cthetas)):
+        print('%i'%(i+1)+' / '+'%i'%len(cthetas),'\r',end='')
         result = s.cut_disc(cthetas[i]) 
         try: 
             _velo.extend(result[1]) 
@@ -172,10 +175,11 @@ if __name__=='__main__':
         except: 
             pass 
     np.savetxt(filename+'.txt',np.vstack([_ctheta,_velo,_weight]).T)
-    plt.hist2d(_velo,_ctheta,weights = _weight,bins=[np.linspace(1e-3,0.06,40),np.linspace(-1,1,40)],cmap='afmhot')
+    plt.hist2d(_velo,_ctheta,weights = _weight,bins=[np.linspace(0.03,0.06,80),np.linspace(-1,1,40)],cmap='afmhot')
     plt.xlabel('velo')
-    plt.ylabel('ctheta')
+    plt.ylabel(r'$\cos(\theta)$')
     plt.ylim(-1,1)
     plt.colorbar()
     plt.savefig(filename+'.jpg')
+    print('\nFigure saved.')
     

@@ -59,6 +59,7 @@ s.calc_sum_ndsig2rho_v2dlnEdlnq(0)
 s.inSIG2rhos()
 # create file if not exist
 Filename = settings['mdm']+'_'+settings['sige']+'_'+settings['v0']
+input('Press Enter...')
 
 print('\n\n************************************')
 print('******  READY FOR SIMULATION  ******')
@@ -142,6 +143,6 @@ print('***********************************')
 print('try:')
 print('"cd results"')
 print('"python PathAnalysis.py '+Filename+'/'+Filename+'"'+'\n')
-print('Good Luck. If you encounter any problems, email xxueitp@gmail.com and I will try to help you. Note that you can rerun the code with the same dark matter parameters, and the results will be added to the previous file (if you don\'t use ctrl+c to cancel it in the middle of the run).')
+print('Good Luck. If you encounter any problem, email xxueitp@gmail.com and I will try to help you. Note that you can rerun the code with the same dark matter parameters, and the results will be added to the previous file (if you don\'t use ctrl+c to cancel it in the middle of the run).')
 
 

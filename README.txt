@@ -4,9 +4,9 @@
 2. Then run the simulation directly
     python run_simulation.py
     
-3. cd to the results/ and run the analysis code
+3. cd to the results/ and run the analysis code and get a reference figure in the directory.
     python PathAnalysis.py **/**
-   then you can get a reference figure
+
     
 ###################################################################  
 ** Notice: Only support python 3.
@@ -17,7 +17,6 @@
     xxueitp@gmail.com
 ################################################################### 
 *** Citation:
-
 If you use our code in your research work, you shall cite following papers
 1. 
 

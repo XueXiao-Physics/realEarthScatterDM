@@ -2,6 +2,7 @@ import numpy as np
 import h5py
 import os
 import sys
+import tqdm
 
 
 class PathAnalysis:
@@ -24,8 +25,8 @@ class PathAnalysis:
             self.mdm = np.asarray(f['mdm'])
             self.sige = np.asarray(f['sige'])
             rawpaths = []
-            for i in range(len(keynames)):
-                print('%i'%(i+1)+' / '+'%i'%len(keynames),'\r',end='')    
+            for i in tqdm.tqdm(range(len(keynames))):
+                #print('%i'%(i+1)+' / '+'%i'%len(keynames),'\r',end='')    
                 path = np.asarray( f[keynames[i]] )
                 rawpaths.append( path )
             MaxSteps = max([len(p[0]) for p in rawpaths])
@@ -147,35 +148,37 @@ if __name__=='__main__':
     s.load_paths()
     
     
-    '''
+    
     print("\nUsing single sphere to cut the DM Paths.")
     s.cut_sphere()
-    np.savetxt(filename+'.txt',np.vstack([s.hitctheta,s.hitvelo]).T)
-    plt.hist2d(s.hitvelo,s.hitctheta,weights = s.weight,bins=[np.linspace(1e-3,0.06),np.linspace(-1,1)],cmap='afmhot')
-    plt.xlabel('velo')
-    plt.ylabel('ctheta')
-    plt.ylim(-1,1)
-    plt.savefig(filename+'.jpg')
-    plt.colorbar()
-    '''
+    np.savetxt(filename+'_hitpos_sphere.txt',s.hitpos)
+    #plt.hist2d(s.hitvelo,s.hitctheta,weights = s.weight,bins=[np.linspace(1e-3,0.06),np.linspace(-1,1)],cmap='afmhot')
+    #plt.xlabel('velo')
+    #plt.ylabel('ctheta')
+    #plt.ylim(-1,1)
+    #plt.savefig(filename+'.jpg')
+    #plt.colorbar()
+   
     
-    print("\nUsing disks to cut the DM Paths.")
+    print("\nUsing discs to cut the DM Paths.")
     _velo = [] 
     _ctheta = [] 
     _weight = [] 
+    _hitpos = []
     
     cthetas = np.linspace(-1,1,1000)
-    for i in range(len(cthetas)):
-        print('%i'%(i+1)+' / '+'%i'%len(cthetas),'\r',end='')
+    for i in tqdm.tqdm(range(len(cthetas))):
         result = s.cut_disc(cthetas[i]) 
         try: 
             _velo.extend(result[1]) 
             _ctheta.extend(result[3]) 
             _weight.extend(1/result[2]/result[4]) 
+            _hitpos.extend(result[0])
         except: 
             pass 
-    np.savetxt(filename+'.txt',np.vstack([_ctheta,_velo,_weight]).T)
-    plt.hist2d(_velo,_ctheta,weights = _weight,bins=[np.linspace(0.03,0.06,80),np.linspace(-1,1,40)],cmap='afmhot')
+    np.savetxt(filename+'_ctheta_velo_weight.txt',np.vstack([_ctheta,_velo,_weight]).T)
+    np.savetxt(filename+'_hitpos_disc',_hitpos)
+    plt.hist2d(_velo,_ctheta,weights = _weight,bins=[np.linspace(0.00,0.06,80),np.linspace(-1,1,40)],cmap='afmhot')
     plt.xlabel('velo')
     plt.ylabel(r'$\cos(\theta)$')
     plt.ylim(-1,1)

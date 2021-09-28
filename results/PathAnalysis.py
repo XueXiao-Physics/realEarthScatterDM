@@ -13,6 +13,9 @@ class PathAnalysis:
         self.filename = filename
         self.Earth_radius = 6371.
         self.detector_depth = 1.6
+        self.detector_pos = self.Earth_radius-self.detector_depth
+        print('set Earth\'s radius', '%.1f'%self.Earth_radius,'km')
+        print('set detector depth at', '%.1f'%self.detector_depth,'km')
         if os.path.exists(filename)==False:
             print('error, file doesn\'t exist.')
 
@@ -42,10 +45,6 @@ class PathAnalysis:
         
 
     def cut_sphere(self):
-
-        detector_pos = self.Earth_radius-self.detector_depth
-        print('set Earth\'s radius', '%.1f'%self.Earth_radius,'km')
-        print('set detector depth at', '%.1f'%self.detector_depth,'km')
         
         # B minus A
         A = self.Paths[:,:3,:-1]
@@ -61,7 +60,7 @@ class PathAnalysis:
         
         a = absBminusA**2 + 0j
         b = 2*np.sum(A*(B-A),axis=1) + 0j
-        c = absA**2 - detector_pos**2 + 0j
+        c = absA**2 - self.detector_pos**2 + 0j
         
         solution_1 = (-b-np.sqrt(b**2-4*a*c))/2/a
         solution_2 = (-b+np.sqrt(b**2-4*a*c))/2/a
@@ -91,22 +90,23 @@ class PathAnalysis:
         nvelo2 = BminusA[ihit2[0],:,ihit2[1]]/absBminusA[ihit2[0],None,ihit2[1]]
         
         # n_dm \dot n_sphere 
-        weight1 = 1/np.abs(np.sum(hitpos1*nvelo1,axis=1)/detector_pos)
-        weight2 = 1/np.abs(np.sum(hitpos2*nvelo2,axis=1)/detector_pos)
+        weight1 = 1/np.abs(np.sum(hitpos1*nvelo1,axis=1)/self.detector_pos)
+        weight2 = 1/np.abs(np.sum(hitpos2*nvelo2,axis=1)/self.detector_pos)
         
         
         
         self.hitpos = np.concatenate([hitpos1,hitpos2])
         self.hitvelo = np.concatenate([hitvelo1,hitvelo2])
-        self.hitctheta = self.hitpos[:,2]/detector_pos
+        self.hitctheta = self.hitpos[:,2]/self.detector_pos
         self.weight = np.concatenate([weight1,weight2])
 
        
-    def cut_disc(self,ctheta,offset=0.):
+    def cut_disc(self,ctheta):
     
         stheta = np.sqrt(1-ctheta**2)
-        detector_pos = self.Earth_radius-(self.detector_depth + offset)
-        z_plane = ctheta*detector_pos
+        max_width = np.sqrt(self.Earth_radius**2 - (self.detector_pos*ctheta)**2)
+        
+        z_plane = ctheta*self.detector_pos
         
         if_above = self.Paths[:,2,:] > z_plane
         if_hit = np.where(np.diff(if_above))
@@ -123,15 +123,15 @@ class PathAnalysis:
         
         
         hit_dis2core = np.linalg.norm(hit_pos[:,:2],axis=1)
-        if_border = (hit_dis2core>(detector_pos*stheta-0.3)) * (hit_dis2core<(detector_pos*stheta+0.3))
+        if_border = (hit_dis2core>(self.detector_pos*stheta-0.3)) * (hit_dis2core<(self.detector_pos*stheta+0.3))
         hitborder_pos = hit_pos[if_border]
         hitborder_cphi = hit_cphi[if_border]
         hitborder_velo = hit_velo[if_border]
         count = len(hitborder_velo)
         
-        area = (np.pi*(detector_pos*stheta+0.3)**2 - np.pi*( max(0,detector_pos*stheta-0.3) )**2)/(np.pi*self.Earth_radius**2)
+        area = np.pi*(min(max_width,self.detector_pos*stheta+0.3)**2 - max(0,self.detector_pos*stheta-0.3)**2)
           
-        return hitborder_pos , hitborder_velo , hitborder_cphi , ctheta*np.ones(count) , area*np.ones(count)
+        return hitborder_pos , hitborder_velo , hitborder_cphi , ctheta*np.ones(count) , area
         
         
             
@@ -147,42 +147,74 @@ if __name__=='__main__':
     print("Loading Paths")
     s.load_paths()
     
-    
+
     
     print("\nUsing single sphere to cut the DM Paths.")
     s.cut_sphere()
     np.savetxt(filename+'_hitpos_sphere.txt',s.hitpos)
-    #plt.hist2d(s.hitvelo,s.hitctheta,weights = s.weight,bins=[np.linspace(1e-3,0.06),np.linspace(-1,1)],cmap='afmhot')
-    #plt.xlabel('velo')
-    #plt.ylabel('ctheta')
-    #plt.ylim(-1,1)
-    #plt.savefig(filename+'.jpg')
-    #plt.colorbar()
+
    
-    
+
     print("\nUsing discs to cut the DM Paths.")
     _velo = [] 
     _ctheta = [] 
     _weight = [] 
-    _hitpos = []
+    _hitpos = [] 
+    _area_list = []
     
-    cthetas = np.linspace(-1,1,1000)
+    
+    cbins = 41
+    vbins = 41
+    cbins_interv = 25
+    bin_ctheta = np.linspace(-1,1,cbins)
+    bin_velo = np.logspace(-3,-1,vbins)
+
+    diff_bin_ctheta = bin_ctheta[1] - bin_ctheta[0]
+    diff_bin_velo = np.diff(bin_velo)
+    
+    cthetas = diff_bin_ctheta/cbins_interv * (np.arange(0,(cbins_interv*(cbins-1)))+0.5) - 1
+    
     for i in tqdm.tqdm(range(len(cthetas))):
         result = s.cut_disc(cthetas[i]) 
+        _area_list.append(result[4])
         try: 
             _velo.extend(result[1]) 
             _ctheta.extend(result[3]) 
-            _weight.extend(1/result[2]/result[4]) 
+            _weight.extend(1/result[2]) 
             _hitpos.extend(result[0])
         except: 
             pass 
-    np.savetxt(filename+'_ctheta_velo_weight.txt',np.vstack([_ctheta,_velo,_weight]).T)
+    np.savetxt(filename+'_ctheta_velo_weight_disc.txt',np.vstack([_ctheta,_velo,_weight]).T)
     np.savetxt(filename+'_hitpos_disc',_hitpos)
-    plt.hist2d(_velo,_ctheta,weights = _weight,bins=[np.linspace(0.00,0.06,80),np.linspace(-1,1,40)],cmap='afmhot')
+    np.savetxt(filename+'_binarea_disc',np.vstack([cthetas,_area_list]).T)
+    
+    bin_area = np.array(_area_list).reshape(cbins-1,cbins_interv).sum(axis=1)
+    
+    
+    
+    phi0 = s.Paths.shape[0]/np.pi/s.Earth_radius**2
+    
+    darea = 4*np.pi*s.detector_pos**2/cbins
+    plt.figure(figsize=(12,4))
+    plt.subplot(121)    
+    h = np.histogram2d(s.hitvelo,s.hitctheta,weights = s.weight,bins=[bin_velo,bin_ctheta])
+    plt.pcolormesh(bin_velo,bin_ctheta,h[0].T/darea/phi0,cmap='afmhot',vmax=1)
+    plt.xscale('log')
+    plt.ylabel(r'$\cos(\theta)$')
+    plt.ylim(-1,1)
+    plt.colorbar()
+    plt.title('sphere')
+    
+     
+    plt.subplot(122)
+    h = np.histogram2d(_velo,_ctheta,weights = _weight,bins=[ bin_velo,bin_ctheta])
+    plt.pcolormesh(bin_velo,bin_ctheta,(h[0]/bin_area).T/phi0,cmap='afmhot',vmax=1)
+    plt.xscale('log')
     plt.xlabel('velo')
     plt.ylabel(r'$\cos(\theta)$')
     plt.ylim(-1,1)
     plt.colorbar()
-    plt.savefig(filename+'.jpg')
-    print('\nFigure saved.')
+    plt.title('discs')
     
+    plt.savefig(filename+'.jpg')
+    print('\n Figure saved.')

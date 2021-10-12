@@ -185,8 +185,8 @@ if __name__=='__main__':
         except: 
             pass 
     np.savetxt(filename+'_ctheta_velo_weight_disc.txt',np.vstack([_ctheta,_velo,_weight]).T)
-    np.savetxt(filename+'_hitpos_disc',_hitpos)
-    np.savetxt(filename+'_binarea_disc',np.vstack([cthetas,_area_list]).T)
+    np.savetxt(filename+'_hitpos_disc.txt',_hitpos)
+    np.savetxt(filename+'_binarea_disc.txt',np.vstack([cthetas,_area_list]).T)
     
     bin_area = np.array(_area_list).reshape(cbins-1,cbins_interv).sum(axis=1)
     

@@ -18,7 +18,7 @@
 ################################################################### 
 *** Citation:
 If you use our code in your research work, you shall cite following papers
-1. 
+1. Yifan Chen, Bartosz Fornal, Pearl Sandick, Jing Shu, Xiao Xue, Yue Zhao, and Junchao Zong. (2021). Earth Shielding and Daily Modulation from Electrophilic Boosted Dark Matter. arXiv:2110.09685.
 
 and share the following link in your footnote.
 2. https://github.com/XueXiao-Physics/realEarthScatterDM 

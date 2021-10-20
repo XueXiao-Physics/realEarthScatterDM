@@ -70,22 +70,34 @@ def get_K():
     print('ne / rho_core   = %.2e'%ne2rho_core,'(1/kg)')
     print('ne / rho_mantle = %.2e'%ne2rho_mantle,'(1/kg)')
 
-    K_dict = {}
-    for key in mass_dict:
-        f = h5py.File('EarthAtomicResponse/'+key+'_Ktot.hdf5','r')
-        K = np.asarray(f['Ktot'])
+    try:
+        f = h5py.File('EarthAtomicResponse/K_core.hdf5','r')
+        K_core = np.asarray(f['Ktot'])
         q = np.asarray(f['q'])
         ER = np.asarray(f['ER'])
-        f.close()
-        K_dict.update({key:K})
+        
+        f = h5py.File('EarthAtomicResponse/K_mantle.hdf5','r')
+        K_mantle = np.asarray(f['Ktot'])
+        q = np.asarray(f['q'])
+        ER = np.asarray(f['ER'])
+        print("Using the existing Ktot files...")
+    except OSError:
+        K_dict = {}
+        for key in mass_dict:
+            f = h5py.File('EarthAtomicResponse/'+key+'_Ktot.hdf5','r')
+            K = np.asarray(f['Ktot'])
+            q = np.asarray(f['q'])
+            ER = np.asarray(f['ER'])
+            f.close()
+            K_dict.update({key:K})
 
 
-    # get total K in 
-    K_core = 0.
-    K_mantle = 0.
-    for key in mass_dict:
-        K_core += K_dict[key]*n2rho_core[key]
-        K_mantle += K_dict[key]*n2rho_mantle[key]
+        # get total K in 
+        K_core = 0.
+        K_mantle = 0.
+        for key in mass_dict:
+            K_core += K_dict[key]*n2rho_core[key]
+            K_mantle += K_dict[key]*n2rho_mantle[key]
     
 
     return K_core,K_mantle,q,ER,n2rho_core,n2rho_mantle,ne2rho_core,ne2rho_mantle

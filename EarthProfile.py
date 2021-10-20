@@ -80,7 +80,7 @@ def get_K():
         K_mantle = np.asarray(f['Ktot'])
         q = np.asarray(f['q'])
         ER = np.asarray(f['ER'])
-        print("Using the existing Ktot files...")
+        print("**** Using the existing Ktot files... ****")
     except OSError:
         K_dict = {}
         for key in mass_dict:
